@@ -1,0 +1,54 @@
+clc
+clear
+n = 63; % the number of servers
+request_n = 12000000; % the number of requests
+
+% An example of an IPv6 address is '2001:0DB8:0000:0000:0008:0800:200C:417A'.
+D = hex2dec('FFFFFFFFFFFF'); % the first 12 digits in client IP address
+client_IP_rand = randi([0 D], 1, request_n, 'single');
+
+%% Example of a hash function based on mid-square
+sqr_client_IP_rand = client_IP_rand.^2; % square the client IP address
+st2 = compose("%18.0f", sqr_client_IP_rand); % convert number to string with more digits (extended to 18 digits)
+
+hash_mid_square = zeros(1, request_n); % Preallocate for efficiency
+for i = 1:request_n
+    L = strlength(st2(i));
+    mid1 = round(L / 2) - 2; % adjust to capture more middle digits (start 2 positions before the exact middle)
+    mid2 = mid1 + 3; % capture 4 digits for better distribution
+    st = st2{i}(mid1:mid2); % used as key, middle 4 digits of the square client IP address
+    hash_mid_square(i) = str2double(st); % convert string to number
+end
+hash_mid_square = mod(hash_mid_square, n); % mod by number of servers
+
+subplot(121);
+histogram(hash_mid_square, n); % plot histogram
+title('Mid-Square Method');
+xlabel('Server Index');
+ylabel('Number of Requests');
+mean_mid_square = mean(hash_mid_square); % calculate mean
+std_mid_square = std(hash_mid_square); % calculate standard deviation
+
+%% Example of a hash function h(x)=((ax + b) mod p) mod n
+% Modular Arithmetic
+
+p = 2^37 - 1; % a large prime number, closer to 2^37
+a = 123457; % chosen constant a, large prime number
+b = 678910; % chosen constant b, large prime number
+
+hash_f = mod(a .* client_IP_rand + b, p); % Hash function based on Modular Arithmetic
+hash_f = mod(hash_f, n); % mod by number of servers
+
+subplot(122);
+histogram(hash_f, n); % plot histogram
+title('Modular Arithmetic Method');
+xlabel('Server Index');
+ylabel('Number of Requests');
+mean_Modular = mean(hash_f); % calculate mean
+std_Modular = std(hash_f); % calculate standard deviation
+
+% Display mean and standard deviation
+disp(['Mean (Mid-Square): ', num2str(mean_mid_square)]);
+disp(['Standard Deviation (Mid-Square): ', num2str(std_mid_square)]);
+disp(['Mean (Modular Arithmetic): ', num2str(mean_Modular)]);
+disp(['Standard Deviation (Modular Arithmetic): ', num2str(std_Modular)]);

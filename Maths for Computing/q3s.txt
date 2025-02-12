@@ -1,0 +1,136 @@
+#include <stdio.h>
+#include <stdlib.h> // Include stdlib.h for abs() function
+
+#define MATRIX_SIZE 100 // Increased matrix size for more space
+
+void drawRectangle(int x, int y, int width, int height, char matrix[MATRIX_SIZE][MATRIX_SIZE]);
+void drawLine(int x1, int y1, int x2, int y2, char matrix[MATRIX_SIZE][MATRIX_SIZE]);
+void drawCircle(int centerX, int centerY, int radius, char matrix[MATRIX_SIZE][MATRIX_SIZE]);
+void drawEmptyCircle(int centerX, int centerY, int radius, char matrix[MATRIX_SIZE][MATRIX_SIZE]);
+void drawVerticalLine(int x, int startY, int endY, char matrix[MATRIX_SIZE][MATRIX_SIZE]);
+void drawHorizontalLine(int y, int startX, int endX, char matrix[MATRIX_SIZE][MATRIX_SIZE]);
+void drawSlantedLine(int x1, int y1, int x2, int y2, char matrix[MATRIX_SIZE][MATRIX_SIZE]);
+
+void displayMatrix(char matrix[MATRIX_SIZE][MATRIX_SIZE]);
+
+int main() {
+    char matrix[MATRIX_SIZE][MATRIX_SIZE];
+
+    // Initialize matrix with spaces
+    for (int i = 0; i < MATRIX_SIZE; i++) {
+        for (int j = 0; j < MATRIX_SIZE; j++) {
+            matrix[i][j] = ' ';
+        }
+    }
+
+
+drawRectangle(53, 3, 9, 3, matrix);            
+drawEmptyCircle(57, 17, 9, matrix);
+drawEmptyCircle(55,17,1,matrix);
+drawEmptyCircle(61,17,1,matrix);
+drawCircle(55,17,1,matrix);
+drawCircle(61,17,1,matrix); 
+drawHorizontalLine(21, 55, 65, matrix);        
+drawSlantedLine(55, 21, 77, 29, matrix);
+drawSlantedLine(65, 21, 77, 29, matrix);
+drawSlantedLine(65, 27, 77, 39, matrix);
+drawSlantedLine(71, 39, 73, 41, matrix);
+drawSlantedLine(69, 39, 75,45, matrix);
+drawSlantedLine(67, 41, 73, 45, matrix);
+drawSlantedLine(65, 43, 61, 47, matrix);
+drawEmptyCircle(55,49,5,matrix);
+drawSlantedLine(53, 55, 47, 61, matrix);
+drawRectangle(45, 59, 3, 7, matrix);
+drawRectangle(39, 59, 3, 7, matrix);
+drawHorizontalLine(67, 49, 55, matrix);
+drawSlantedLine(49, 65, 51, 63, matrix);
+drawSlantedLine(39, 57, 37, 59, matrix);
+drawVerticalLine(35, 53, 69, matrix);
+drawVerticalLine(31, 55, 69, matrix);
+drawHorizontalLine(71, 31, 35, matrix);
+drawVerticalLine(27, 57, 75, matrix);
+drawVerticalLine(23, 59, 75, matrix);
+drawHorizontalLine(77, 23, 27, matrix);
+drawVerticalLine(19, 61, 69, matrix);
+drawVerticalLine(15, 63, 69, matrix);
+drawHorizontalLine(71, 15, 19, matrix);
+drawSlantedLine(13, 65, 9, 69, matrix);
+drawSlantedLine(5, 69, 17, 55, matrix);
+drawSlantedLine(17, 53, 7, 55, matrix);
+drawSlantedLine(5, 55, 21, 39, matrix);
+drawSlantedLine(21, 39, 33, 51, matrix);
+drawSlantedLine(33, 51, 47, 17, matrix);
+drawSlantedLine(21, 39, 47, 17, matrix);
+    
+    // Display matrix
+    displayMatrix(matrix);
+
+    return 0;
+}
+
+void drawRectangle(int x, int y, int width, int height, char matrix[MATRIX_SIZE][MATRIX_SIZE]) {
+    for (int i = y; i < y + height; i++) {
+        for (int j = x; j < x + width; j++) {
+            matrix[i][j] = '*';
+        }
+    }
+}
+
+void drawCircle(int centerX, int centerY, int radius, char matrix[MATRIX_SIZE][MATRIX_SIZE]) {
+    for (int y = 0; y < MATRIX_SIZE; y++) {
+        for (int x = 0; x < MATRIX_SIZE; x++) {
+            if ((x - centerX) * (x - centerX) + (y - centerY) * (y - centerY) <= radius * radius) {
+                matrix[y][x] = '*';
+            }
+        }
+    }
+}
+
+void drawEmptyCircle(int centerX, int centerY, int radius, char matrix[MATRIX_SIZE][MATRIX_SIZE]) {
+    for (int y = 0; y < MATRIX_SIZE; y++) {
+        for (int x = 0; x < MATRIX_SIZE; x++) {
+            // Check if the point is on the circumference of the circle using circle equation
+            if ((x - centerX) * (x - centerX) + (y - centerY) * (y - centerY) == radius * radius) {
+                matrix[y][x] = '*'; // Mark only the boundary points
+            }
+        }
+    }
+}
+
+void drawVerticalLine(int x, int startY, int endY, char matrix[MATRIX_SIZE][MATRIX_SIZE]) {
+    for (int i = startY; i <= endY; i++) {
+        matrix[i][x] = '*';
+    }
+}
+
+void drawHorizontalLine(int y, int startX, int endX, char matrix[MATRIX_SIZE][MATRIX_SIZE]) {
+    for (int i = startX; i <= endX; i++) {
+        matrix[y][i] = '*';
+    }
+}
+
+void drawSlantedLine(int x1, int y1, int x2, int y2, char matrix[MATRIX_SIZE][MATRIX_SIZE]) {
+    int dx = abs(x2 - x1);
+    int dy = abs(y2 - y1);
+    int sx = x1 < x2 ? 1 : -1;
+    int sy = y1 < y2 ? 1 : -1;
+    int err = (dx > dy ? dx : -dy) / 2;
+    int e2;
+
+    while (1) {
+        matrix[y1][x1] = '*';
+        if (x1 == x2 && y1 == y2) break;
+        e2 = err;
+        if (e2 > -dx) { err -= dy; x1 += sx; }
+        if (e2 < dy) { err += dx; y1 += sy; }
+    }
+}
+
+void displayMatrix(char matrix[MATRIX_SIZE][MATRIX_SIZE]) {
+    for (int i = 0; i < MATRIX_SIZE; i++) {
+        for (int j = 0; j < MATRIX_SIZE; j++) {
+            printf("%c ", matrix[i][j]); // Add a space between characters
+        }
+        printf("\n");
+    }
+}
