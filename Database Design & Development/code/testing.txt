@@ -1,0 +1,126 @@
+-- note : this is not all the testing code , its just part of it 
+
+
+-- testing PK 
+-- uniqueness 
+USE DonorTrackingSystem;
+INSERT INTO Donor (Donor_ID, First_Name, Last_Name, Date_of_Birth, Email_Address, Career_Details)
+VALUES (1, 'John', 'Doe', '1985-02-20', 'john.doe@example.com', 'Engineer');
+
+-- NOT Null
+USE DonorTrackingSystem;
+
+-- Try inserting a NULL value for Donor_ID
+INSERT INTO Donor (Donor_ID, First_Name, Last_Name, Date_of_Birth, Email_Address, Career_Details) 
+VALUES (NULL, 'Alice', 'Smith', '1990-05-10', 'alice.smith@example.com', 'Doctor');
+
+-- all casess of FK
+-- Non-existent PK Test
+USE DonorTrackingSystem;
+INSERT INTO Donation (Donation_ID, Donor_ID, Date, Amount, Donation_Type, Method_of_Payment) 
+VALUES (20, 999, '2024-06-01', 500.00, 'Cash', 'Credit Card');
+
+-- On Delete Cascade Test
+SELECT * FROM Donation;
+DELETE FROM Donor WHERE Donor_ID = 5;
+SELECT * FROM Donation;
+
+-- SET NULL test
+-- First, insert a donor and an event
+INSERT INTO Donor (First_Name, Last_Name, Date_of_Birth, Email_Address, Career_Details)
+VALUES ('Alice', 'Johnson', '1985-06-15', 'alice@email.com', 'Engineer');
+
+INSERT INTO Event (Event_Name, Event_Date, Country, City, Street_Name, Building_Number, Type)
+VALUES ('Tech Fundraiser', '2025-05-12', 'USA', 'San Francisco', 'Market St', '300', 'Fundraising');
+
+-- Insert communication linked to that donor and event
+INSERT INTO Communication_History (Donor_ID, Event_ID, Type_of_Communication, Date, Notes, Follow_Up_Required)
+VALUES (LAST_INSERT_ID(), LAST_INSERT_ID(), 'Email', '2025-05-10', 'Event invitation sent', TRUE);
+
+-- Delete the donor
+DELETE FROM Donor WHERE Email_Address = 'alice@email.com';
+
+-- Check the communication history table
+SELECT * FROM Communication_History WHERE Notes = 'Event invitation sent';
+
+
+-- SET NULL test
+-- First, insert a donor and an event
+INSERT INTO Donor (First_Name, Last_Name, Date_of_Birth, Email_Address, Career_Details)
+VALUES ('Alice', 'Johnson', '1985-06-15', 'alice@email.com', 'Engineer');
+
+INSERT INTO Event (Event_Name, Event_Date, Country, City, Street_Name, Building_Number, Type)
+VALUES ('Tech Fundraiser', '2025-05-12', 'USA', 'San Francisco', 'Market St', '300', 'Fundraising');
+-- Insert communication linked to that donor and event
+INSERT INTO Communication_History (Donor_ID, Event_ID, Type_of_Communication, Date, Notes, Follow_Up_Required)
+VALUES (8, 5, 'Email', '2025-05-10', 'Event invitation sent', TRUE);
+
+-- Delete the donor
+DELETE FROM Donor WHERE Email_Address = 'alice@email.com';
+-- Check the communication history table
+SELECT * FROM Communication_History WHERE Notes = 'Event invitation sent';
+
+
+-- Unique Constraint Test
+INSERT INTO Donor (First_Name, Last_Name, Date_of_Birth, Email_Address, Career_Details)
+VALUES ('Alice', 'Johnson', '1985-06-15', 'alice@email.com', 'Engineer');
+
+INSERT INTO Donor (First_Name, Last_Name, Date_of_Birth, Email_Address, Career_Details)
+VALUES ('Bob', 'Smith', '1992-08-25', 'alice@email.com', 'Doctor'); -- Duplicate Email
+
+-- Default Constraint Test
+
+INSERT INTO Communication_History (Donor_ID, Event_ID, Type_of_Communication, Date, Notes)
+VALUES (3, 2, 'Phone Call', '2025-05-10', 'Follow-up on event participation');
+
+SELECT Follow_Up_Required FROM Communication_History WHERE Donor_ID = 3;
+
+-- Not Null Constraint Test
+INSERT INTO Donor (First_Name, Last_Name, Date_of_Birth, Email_Address, Career_Details)
+VALUES (NULL, 'Doe', '1985-02-20', 'johndoe@email.com', 'Engineer');
+
+-- Check Constraint Test
+INSERT INTO Donation (Donor_ID, Date, Amount, Donation_Type, Method_of_Payment)
+VALUES (2, '2025-06-01', -100, 'Money', 'Credit Card'); -- Negative Amount
+
+
+
+-- Output Validation
+
+SELECT Donor_ID, Date, Amount, Donation_Type, Method_of_Payment 
+FROM Donation 
+WHERE Donor_ID = 1;
+
+-- INSERT, UPDATE, and DELETE Operations
+-- INSERT Query 
+INSERT INTO Donor (First_Name, Last_Name, Date_of_Birth, Email_Address, Career_Details)
+VALUES ('Alice', 'Williams', '1992-07-21', 'alice.williams@email.com', 'Data Scientist');
+-- Validation
+SELECT * FROM Donor WHERE Email_Address = 'alice.williams@email.com';
+-- UPDATE Query (Modifying Alice’s Career Details):
+UPDATE Donor 
+SET Career_Details = 'Machine Learning Engineer' 
+WHERE Email_Address = 'alice.williams@email.com';
+-- Validation
+SELECT Career_Details FROM Donor WHERE Email_Address = 'alice.williams@email.com';
+
+-- DELETE Query (Removing Alice from the Donor Table):
+DELETE FROM Donor WHERE Email_Address = 'alice.williams@email.com';
+-- Validation
+SELECT * FROM Donor WHERE Email_Address = 'alice.williams@email.com';
+
+-- Aggregation Function with GROUP BY
+SELECT Donor_ID, SUM(Amount) AS Total_Donated 
+FROM Donation 
+GROUP BY Donor_ID;
+
+-- View Query
+SELECT * FROM DonorDonationSummary;
+
+-- Stored Procedure Execution
+CALL InsertDonation(3, '2025-06-15', 500.00, 'Money', 'Credit Card');
+-- Validation
+SELECT * FROM Donation WHERE Donor_ID = 3;
+
+
+SHOW GRANTS FOR 'admin_user'@'localhost';
