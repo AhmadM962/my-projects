@@ -1,0 +1,1671 @@
+Full code :
+Ahmad Marwan ALMAGHAIREH 
+23110205
+
+
+
+
+
+
+
+task1_des.py :
+
+#!/usr/bin/env python3                      # Shebang for running as a script from shell
+# Lock & Key — Task 1: Confidentiality utility
+# DES from scratch + CBC with Ciphertext Stealing (CS3, direct formulas)
+# Now with verbose tracing for CBC + CTS and a minimal 2-option menu.
+# Pure Python, no external libraries.
+
+from __future__ import annotations          # For forward type annotations (helps older Python versions)
+from typing import List, Tuple              # Type hints for clarity
+
+# ------------------------ Tables (standard DES) ------------------------
+IP = [                                     # DES Initial Permutation (IP) table: 64 -> 64 bit permutation
+    58, 50, 42, 34, 26, 18, 10,  2,        # Row 1 of IP mapping positions
+    60, 52, 44, 36, 28, 20, 12,  4,        # Row 2
+    62, 54, 46, 38, 30, 22, 14,  6,        # Row 3
+    64, 56, 48, 40, 32, 24, 16,  8,        # Row 4
+    57, 49, 41, 33, 25, 17,  9,  1,        # Row 5
+    59, 51, 43, 35, 27, 19, 11,  3,        # Row 6
+    61, 53, 45, 37, 29, 21, 13,  5,        # Row 7
+    63, 55, 47, 39, 31, 23, 15,  7         # Row 8
+]
+FP = [                                     # DES Final Permutation (FP, a.k.a. IP^-1): 64 -> 64 bit inverse of IP
+    40,  8, 48, 16, 56, 24, 64, 32,        # Row 1
+    39,  7, 47, 15, 55, 23, 63, 31,        # Row 2
+    38,  6, 46, 14, 54, 22, 62, 30,        # Row 3
+    37,  5, 45, 13, 53, 21, 61, 29,        # Row 4
+    36,  4, 44, 12, 52, 20, 60, 28,        # Row 5
+    35,  3, 43, 11, 51, 19, 59, 27,        # Row 6
+    34,  2, 42, 10, 50, 18, 58, 26,        # Row 7
+    33,  1, 41,  9, 49, 17, 57, 25         # Row 8
+]
+E = [                                      # Expansion function E: expands 32-bit R to 48 bits by duplicating edges
+    32,  1,  2,  3,  4,  5,                # Group 1 (wrap-around from bit 32 to 1)
+     4,  5,  6,  7,  8,  9,                # Group 2
+     8,  9, 10, 11, 12, 13,                # Group 3
+    12, 13, 14, 15, 16, 17,                # Group 4
+    16, 17, 18, 19, 20, 21,                # Group 5
+    20, 21, 22, 23, 24, 25,                # Group 6
+    24, 25, 26, 27, 28, 29,                # Group 7
+    28, 29, 30, 31, 32,  1                 # Group 8 (wrap-around to bit 1)
+]
+P = [                                      # P permutation: permutes the 32-bit S-box output
+    16,  7, 20, 21,                        # Row 1
+    29, 12, 28, 17,                        # Row 2
+     1, 15, 23, 26,                        # Row 3
+     5, 18, 31, 10,                        # Row 4
+     2,  8, 24, 14,                        # Row 5
+    32, 27,  3,  9,                        # Row 6
+    19, 13, 30,  6,                        # Row 7
+    22, 11,  4, 25                         # Row 8
+]
+SBOX = [                                   # 8 DES S-boxes: each maps 6-bit -> 4-bit (row from outer bits, col from inner)
+# S1
+[
+[14,4,13,1,2,15,11,8,3,10,6,12,5,9,0,7],  # Row 0
+[0,15,7,4,14,2,13,1,10,6,12,11,9,5,3,8],  # Row 1
+[4,1,14,8,13,6,2,11,15,12,9,7,3,10,5,0],  # Row 2
+[15,12,8,2,4,9,1,7,5,11,3,14,10,0,6,13],  # Row 3
+],
+# S2
+[
+[15,1,8,14,6,11,3,4,9,7,2,13,12,0,5,10],
+[3,13,4,7,15,2,8,14,12,0,1,10,6,9,11,5],
+[0,14,7,11,10,4,13,1,5,8,12,6,9,3,2,15],
+[13,8,10,1,3,15,4,2,11,6,7,12,0,5,14,9],
+],
+# S3
+[
+[10,0,9,14,6,3,15,5,1,13,12,7,11,4,2,8],
+[13,7,0,9,3,4,6,10,2,8,5,14,12,11,15,1],
+[13,6,4,9,8,15,3,0,11,1,2,12,5,10,14,7],
+[1,10,13,0,6,9,8,7,4,15,14,3,11,5,2,12],
+],
+# S4
+[
+[7,13,14,3,0,6,9,10,1,2,8,5,11,12,4,15],
+[13,8,11,5,6,15,0,3,4,7,2,12,1,10,14,9],
+[10,6,9,0,12,11,7,13,15,1,3,14,5,2,8,4],
+[3,15,0,6,10,1,13,8,9,4,5,11,12,7,2,14],
+],
+# S5
+[
+[2,12,4,1,7,10,11,6,8,5,3,15,13,0,14,9],
+[14,11,2,12,4,7,13,1,5,0,15,10,3,9,8,6],
+[4,2,1,11,10,13,7,8,15,9,12,5,6,3,0,14],
+[11,8,12,7,1,14,2,13,6,15,0,9,10,4,5,3],
+],
+# S6
+[
+[12,1,10,15,9,2,6,8,0,13,3,4,14,7,5,11],
+[10,15,4,2,7,12,9,5,6,1,13,14,0,11,3,8],
+[9,14,15,5,2,8,12,3,7,0,4,10,1,13,11,6],
+[4,3,2,12,9,5,15,10,11,14,1,7,6,0,8,13],
+],
+# S7
+[
+[4,11,2,14,15,0,8,13,3,12,9,7,5,10,6,1],
+[13,0,11,7,4,9,1,10,14,3,5,12,2,15,8,6],
+[1,4,11,13,12,3,7,14,10,15,6,8,0,5,9,2],
+[6,11,13,8,1,4,10,7,9,5,0,15,14,2,3,12],
+],
+# S8
+[
+[13,2,8,4,6,15,11,1,10,9,3,14,5,0,12,7],
+[1,15,13,8,10,3,7,4,12,5,6,11,0,14,9,2],
+[7,11,4,1,9,12,14,2,0,6,10,13,15,3,5,8],
+[2,1,14,7,4,10,8,13,15,12,9,0,3,5,6,11],
+]
+]
+PC1 = [                                   # Permuted Choice 1: 64-bit key -> 56 bits (drop parity)
+    57,49,41,33,25,17,9, 1,58,50,42,34,26,18, 10,2,59,51,43,35,27,
+    19,11,3,60,52,44,36, 63,55,47,39,31,23,15, 7,62,54,46,38,30,22,
+    14,6,61,53,45,37,29, 21,13,5,28,20,12,4
+]
+PC2 = [                                   # Permuted Choice 2: 56-bit (C||D) -> 48-bit round subkey
+    14,17,11,24,1,5, 3,28,15,6,21,10, 23,19,12,4,26,8, 16,7,27,20,13,2,
+    41,52,31,37,47,55, 30,40,51,45,33,48, 44,49,39,56,34,53, 46,42,50,36,29,32
+]
+SHIFTS = [1,1,2,2,2,2,2,2,1,2,2,2,2,2,2,1] # Left-rotation amount per round for the C/D halves
+
+# ------------------------ Helpers ------------------------
+def _permute(bits: int, table: List[int], n_out: int) -> int:
+    out = 0                                  # Will hold the permuted result
+    for i, pos in enumerate(table):          # For each output bit index i, read from input position 'pos'
+        if bits >> (64 - pos) & 1:           # Align so bit 'pos' of a 64-bit lane is at LSB, then mask
+            out |= 1 << (n_out - 1 - i)      # Set the corresponding output bit (MSB-first numbering)
+    return out                                # Return permuted integer of n_out bits (packed in Python int)
+
+def _lrot28(x: int, s: int) -> int:
+    x &= (1 << 28) - 1                        # Ensure x is 28 bits
+    return ((x << s) | (x >> (28 - s))) & ((1 << 28) - 1)  # Circular left rotate by s over 28 bits
+
+def _sbox_substitution(x48: int) -> int:
+    out = 0                                   # Will accumulate eight 4-bit S-box outputs (total 32 bits)
+    for i in range(8):                        # Process each 6-bit chunk for S1..S8
+        block = (x48 >> (42 - 6*i)) & 0x3F    # Extract 6 bits for S-box i
+        row = ((block & 0x20) >> 4) | (block & 0x01)  # Row uses outer bits b6 and b1 → 2-bit row [0..3]
+        col = (block >> 1) & 0x0F             # Column uses middle 4 bits → [0..15]
+        out = (out << 4) | SBOX[i][row][col]  # Append 4-bit S-box output
+    return out                                # 32-bit integer of concatenated S-box outputs
+
+def _round_f(r32: int, k48: int) -> int:
+    e = _permute(r32 << 32, E, 48)            # Expand 32-bit R to 48 bits via E (shift left to align as 64-bit lane)
+    s = _sbox_substitution(e ^ k48)           # XOR with subkey, then S-box substitution → 32 bits
+    p = _permute(s << 32, P, 32)              # Permute with P to diffuse bits
+    return p                                  # Return f(R, K)
+
+# ------------------------ Key schedule ------------------------
+def key_schedule_from_hex(hex_key: str, verbose: bool=False) -> Tuple[List[int], str]:
+    if len(hex_key) != 16:                    # Expect 16 hex chars (64-bit key incl parity)
+        raise ValueError("Key must be 16 hex characters (64 bits incl. parity).")
+    key64 = int(hex_key, 16)                  # Parse hex key string → 64-bit integer
+    k56 = _permute(key64, PC1, 56)            # Apply PC-1 to drop parity bits → 56 bits (C0||D0)
+    c = (k56 >> 28) & ((1 << 28) - 1)         # Upper 28 bits → C0
+    d =  k56        & ((1 << 28) - 1)         # Lower 28 bits → D0
+
+    log = []                                  # Optional log for verbose key schedule display
+    if verbose:
+        log.append(f"PC1 -> 56b: C0={c:07X} D0={d:07X}")  # Show initial C0/D0 in hex
+
+    subs: List[int] = []                      # Will hold 16 round subkeys (48-bit each)
+    for rnd, s in enumerate(SHIFTS, 1):       # For rounds 1..16, rotate according to SHIFTS
+        c = _lrot28(c, s)                     # Left-rotate C by s
+        d = _lrot28(d, s)                     # Left-rotate D by s
+        cd = (c << 28) | d                    # Concatenate to 56-bit C||D
+        k48 = _permute(cd << (64 - 56), PC2, 48)  # Apply PC-2 to select 48 bits for subkey
+        subs.append(k48)                      # Store subkey for this round
+        if verbose:
+            log.append(f"RoundKey {rnd:02d}: {k48:012X}") # Show subkey in hex
+    return subs, ("\n".join(log) if verbose else "")  # Return list and optional log
+
+# ------------------------ Block ops ------------------------
+def des_block_encrypt(block8: bytes, subkeys: List[int], trace: bool=True) -> Tuple[bytes, str]:
+    if len(block8) != 8:                      # DES processes exactly 8-byte blocks
+        raise ValueError("DES operates on 8-byte blocks.")
+    x = int.from_bytes(block8, 'big')         # Convert 8 bytes to 64-bit integer (big-endian)
+    log = []                                  # Log for optional round-by-round trace
+
+    x_ip = _permute(x, IP, 64)                # Apply initial permutation IP
+    l = (x_ip >> 32) & 0xFFFFFFFF             # Split into left 32 bits L0
+    r =  x_ip        & 0xFFFFFFFF             # Right 32 bits R0
+
+    if trace:
+        log.append("Encryption")              # Header
+        log.append(f"After initial permutation {x_ip:016X}")  # Show IP result
+        log.append(f"Round  0  {l:08X}  {r:08X}")             # Show (L0,R0)
+
+    for i, k in enumerate(subkeys, 1):        # 16 Feistel rounds using subkeys K1..K16
+        f = _round_f(r, k)                    # Compute f(R_{i-1}, K_i)
+        l, r = r, (l ^ f) & 0xFFFFFFFF        # Feistel: L_i = R_{i-1}; R_i = L_{i-1} XOR f
+        if trace:
+            log.append(f"Round {i:2d}  {l:08X}  {r:08X}")     # Log round state (Li, Ri)
+
+    pre_fp = (r << 32) | l                    # After round 16, swap halves (R16||L16)
+    x_ct   = _permute(pre_fp, FP, 64)         # Apply final permutation FP to get ciphertext
+    if trace:
+        log.append(f"Cipher Text :  {x_ct:016X}")             # Log final CT
+    return x_ct.to_bytes(8, 'big'), "\n".join(log)            # Return bytes and log
+
+def des_block_decrypt(block8: bytes, subkeys: List[int], trace: bool=True) -> Tuple[bytes, str]:
+    if len(block8) != 8:                      # Still requires 8 bytes
+        raise ValueError("DES operates on 8-byte blocks.")
+    x = int.from_bytes(block8, 'big')         # Parse 64-bit block
+    log = []                                  # Log for tracing
+
+    x_ip = _permute(x, IP, 64)                # Apply IP to ciphertext as well
+    l = (x_ip >> 32) & 0xFFFFFFFF             # Split into L0
+    r =  x_ip        & 0xFFFFFFFF             # and R0
+
+    if trace:
+        log.append("Decryption")              # Header
+        log.append(f"After initial permutation {x_ip:016X}")  # Show IP result
+        log.append(f"Round  0  {l:08X}  {r:08X}")             # Show (L0,R0)
+
+    for i, k in enumerate(reversed(subkeys), 1):  # Use subkeys in reverse order for decryption
+        f = _round_f(r, k)                    # Same f-function
+        l, r = r, (l ^ f) & 0xFFFFFFFF        # Same Feistel structure
+        if trace:
+            log.append(f"Round {i:2d}  {l:08X}  {r:08X}")     # Log round state
+
+    pre_fp = (r << 32) | l                    # Swap halves back
+    x_pt   = _permute(pre_fp, FP, 64)         # Apply FP to recover plaintext
+    if trace:
+        log.append(f"Plain Text :  {x_pt:016X}")              # Log PT
+    return x_pt.to_bytes(8, 'big'), "\n".join(log)            # Return bytes and log
+
+# ------------------------ CBC / CBC-CTS (CS3 direct) ------------------------
+BLOCK = 8                                    # DES block size in bytes
+
+def _xor_bytes(a: bytes, b: bytes) -> bytes:
+    return bytes(x ^ y for x, y in zip(a, b)) # Byte-wise XOR for equal-length inputs
+
+def _split_blocks(data: bytes, size: int) -> List[bytes]:
+    return [data[i:i+size] for i in range(0, len(data), size)] # Split data into chunks of size
+
+def _bhex(b: bytes) -> str:
+    return b.hex().upper()                    # Helper to format bytes as uppercase hex
+
+def _indent(text: str, pad: str = "    ") -> str:
+    return "\n".join(pad + line for line in text.splitlines()) # Indent multi-line text for pretty logs
+
+# --- Standard CBC for full blocks (no trace, core logic preserved) ---
+def des_cbc_encrypt_fullblocks(plain: bytes, subkeys: List[int], iv: bytes) -> bytes:
+    assert len(iv) == BLOCK                   # IV must be 8 bytes
+    out = bytearray()                         # Accumulate ciphertext blocks
+    prev = iv                                 # C_0 = IV
+    for blk in _split_blocks(plain, BLOCK):   # Process each 8-byte block
+        assert len(blk) == BLOCK              # This path expects exact multiples (no CTS)
+        x = _xor_bytes(blk, prev)             # X = P_i XOR C_{i-1}
+        c, _ = des_block_encrypt(x, subkeys, trace=False)  # C_i = E(X)
+        out += c                              
+        prev = c                               # Update chaining value
+    return bytes(out)                          # Return concatenated ciphertext
+
+def des_cbc_decrypt_fullblocks(cipher: bytes, subkeys: List[int], iv: bytes) -> bytes:
+    assert len(iv) == BLOCK                   # IV size check
+    out = bytearray()                         # Accumulate plaintext
+    prev = iv                                 # C_0 = IV
+    for c in _split_blocks(cipher, BLOCK):    # For each ciphertext block
+        assert len(c) == BLOCK                # Must be full blocks
+        x, _ = des_block_decrypt(c, subkeys, trace=False)  # X = D(C_i)
+        p = _xor_bytes(x, prev)               # P_i = X XOR C_{i-1}
+        out += p
+        prev = c                              # Update chaining value
+    return bytes(out)                         # Return concatenated plaintext
+
+# --- CBC with Ciphertext Stealing (CS3, direct two-block logic) ---
+def des_cbc_encrypt_cts(plain: bytes, subkeys: List[int], iv: bytes) -> bytes:
+    assert len(iv) == BLOCK                   # IV must be 8 bytes
+    n = len(plain)                            # Total plaintext length
+    if n == 0:
+        return b""                            # Empty input -> empty output
+    if 0 < n < BLOCK:
+        raise ValueError("CBC-CTS (DES) needs >= 9 bytes total.")  # We require at least 9 bytes for CTS
+    if n % BLOCK == 0:
+        return des_cbc_encrypt_fullblocks(plain, subkeys, iv)  # Multiples of 8 -> normal CBC
+
+    r = n % BLOCK                             # r = last partial block length (1..7)
+    before_len = (n - r) - BLOCK              # Length before the final two blocks
+    before = plain[:before_len]               # P1..P_{m-2} (may be empty)
+    Pm1 = plain[before_len:before_len+BLOCK]  # P_{m-1}: full block
+    Pm  = plain[-r:]                          # P_m: partial block (r bytes)
+
+    C_before = des_cbc_encrypt_fullblocks(before, subkeys, iv) if before_len > 0 else b""  # CBC over earlier blocks
+    C_prev = iv if len(C_before) == 0 else C_before[-BLOCK:]   # C_{m-2} = IV if none before, else last full C
+
+    T, _ = des_block_encrypt(_xor_bytes(Pm1, C_prev), subkeys, trace=False)  # T = E(P_{m-1} XOR C_{m-2})
+    Cm = T[:r]                              # C_m = first r bytes of T (stolen from T)
+    Pm_prime = Pm + T[r:]                   # P_m' = P_m || tail(T) to make a full block (8 bytes)
+    Cm1, _ = des_block_encrypt(_xor_bytes(Pm_prime, C_prev), subkeys, trace=False)  # C_{m-1} = E(P_m' XOR C_{m-2})
+    return C_before + Cm1 + Cm              # Output order (CS3): ... || C_{m-1} || C_m
+
+def des_cbc_decrypt_cts(cipher: bytes, subkeys: List[int], iv: bytes) -> bytes:
+    assert len(iv) == BLOCK                   # IV must be 8
+    n = len(cipher)                           # Total ciphertext length
+    if n == 0:
+        return b""                            # Empty -> empty
+    if 0 < n < BLOCK:
+        raise ValueError("CBC-CTS (DES) needs >= 9 bytes total.")  # Too short for CTS
+    if n % BLOCK == 0:
+        return des_cbc_decrypt_fullblocks(cipher, subkeys, iv)  # Multiples of 8 -> normal CBC
+
+    r = n % BLOCK                             # r = partial tail length (1..7)
+    before_len = n - BLOCK - r                # Bytes before last two (full + partial)
+    C_before = cipher[:before_len]            # C1..C_{m-2} (may be empty)
+    Cm1 = cipher[before_len:before_len+BLOCK] # C_{m-1}: full block
+    Cm  = cipher[-r:]                         # C_m: partial tail
+
+    P_before = des_cbc_decrypt_fullblocks(C_before, subkeys, iv) if before_len > 0 else b""  # Decrypt earlier CBC
+    C_prev = iv if before_len == 0 else C_before[-BLOCK:]   # C_{m-2}
+
+    temp, _ = des_block_decrypt(Cm1, subkeys, trace=False)  # temp = D(C_{m-1})
+    Pm_prime = _xor_bytes(temp, C_prev)             # P_m' = D(C_{m-1}) XOR C_{m-2} = P_m || tail(T)
+    Pm = Pm_prime[:r]                               # Recover the real partial P_m (first r bytes)
+    tail = Pm_prime[r:]                             # tail(T) = remaining bytes to reconstruct T
+    T = Cm + tail                                   # Rebuild T = C_m || tail(T)
+    U, _ = des_block_decrypt(T, subkeys, trace=False)  # U = D(T)
+    Pm1 = _xor_bytes(U, C_prev)                     # Recover P_{m-1} = U XOR C_{m-2}
+    return P_before + Pm1 + Pm                      # Concatenate full plaintext
+
+# ------------------------ VERBOSE TRACING WRAPPERS (no logic change) ------------------------
+def des_cbc_encrypt_fullblocks_trace(plain: bytes, subkeys: List[int], iv: bytes) -> Tuple[bytes, str]:
+    log = [f"CBC ENCRYPT (full blocks), IV={_bhex(iv)}"]  # Start log with IV
+    out = bytearray()                         # Accumulate ciphertext
+    prev = iv                                 # C_0 = IV
+    for idx, blk in enumerate(_split_blocks(plain, BLOCK), 1):  # Enumerate blocks starting at 1
+        x = _xor_bytes(blk, prev)             # X_i = P_i XOR C_{i-1}
+        c, tlog = des_block_encrypt(x, subkeys, trace=True)  # Encrypt and capture DES round trace
+        log.append(f"- Block {idx}")          # Block header
+        log.append(f"  P{idx}   = {_bhex(blk)}")              # Show plaintext block
+        log.append(f"  C{idx-1} = {_bhex(prev)}{' (IV)' if idx==1 else ''}")  # Show previous C (or IV)
+        log.append(f"  X{idx}   = P{idx} XOR C{idx-1} = {_bhex(x)}")          # Show XOR result
+        log.append("  DES E(X):")             # Label for inner DES trace
+        log.append(_indent(tlog, "    "))     # Indent DES trace for readability
+        log.append(f"  C{idx}   = {_bhex(c)}")# Show resulting ciphertext block
+        out += c                              # Append to output
+        prev = c                              # Update chaining value
+    return bytes(out), "\n".join(log)         # Return ciphertext and combined log
+
+def des_cbc_decrypt_fullblocks_trace(cipher: bytes, subkeys: List[int], iv: bytes) -> Tuple[bytes, str]:
+    log = [f"CBC DECRYPT (full blocks), IV={_bhex(iv)}"]  # Start log with IV
+    out = bytearray()                         # Accumulate plaintext blocks
+    prev = iv                                 # C_0 = IV
+    for idx, c in enumerate(_split_blocks(cipher, BLOCK), 1):  # Enumerate ciphertext blocks
+        x, tlog = des_block_decrypt(c, subkeys, trace=True)    # Inner DES decrypt with trace
+        p = _xor_bytes(x, prev)               # P_i = D(C_i) XOR C_{i-1}
+        log.append(f"- Block {idx}")          # Block header
+        log.append(f"  C{idx}   = {_bhex(c)}")                # Show ciphertext block
+        log.append(f"  D(C{idx})= {_bhex(x)}")                # Show DES-decrypted block
+        log.append(f"  C{idx-1} = {_bhex(prev)}{' (IV)' if idx==1 else ''}")  # Show previous C (or IV)
+        log.append(f"  P{idx}   = D(C{idx}) XOR C{idx-1} = {_bhex(p)}")       # Show recovered plaintext block
+        log.append("  DES D(C):")             # Label for DES trace
+        log.append(_indent(tlog, "    "))     # Indent for readability
+        out += p                              # Append plaintext
+        prev = c                              # Update chaining value
+    return bytes(out), "\n".join(log)         # Return plaintext and log
+
+def des_cbc_encrypt_cts_trace(plain: bytes, subkeys: List[int], iv: bytes) -> Tuple[bytes, str]:
+    n = len(plain)                            # Total message length
+    if n % BLOCK == 0:                        # If multiple of 8, use full-block tracing
+        ct, slog = des_cbc_encrypt_fullblocks_trace(plain, subkeys, iv)
+        return ct, slog
+    r = n % BLOCK                             # Partial tail length (1..7)
+    log = [f"CBC-CTS ENCRYPT (CS3), IV={_bhex(iv)}, len={n}, r={r}"]  # CTS header with parameters
+    before_len = (n - r) - BLOCK              # Bytes before the final two blocks
+    before = plain[:before_len]               # Earlier blocks (maybe empty)
+    Pm1 = plain[before_len:before_len+BLOCK]  # Penultimate full block
+    Pm  = plain[-r:]                          # Final partial block
+
+    C_before = b""                            # Will hold ciphertext of earlier blocks (if any)
+    if before_len > 0:
+        C_before, slog = des_cbc_encrypt_fullblocks_trace(before, subkeys, iv) # Trace earlier CBC
+        log.append(slog)                      # Append trace
+    C_prev = iv if len(C_before) == 0 else C_before[-BLOCK:]   # C_{m-2} for the two-block CTS step
+    log.append(f"- Penultimate full block Pm-1 = {_bhex(Pm1)}") # Show P_{m-1}
+    log.append(f"  C(m-2) = {_bhex(C_prev)}")                   # Show C_{m-2}
+
+    X = _xor_bytes(Pm1, C_prev)               # X = P_{m-1} XOR C_{m-2}
+    T, tlog = des_block_encrypt(X, subkeys, trace=True)         # T = E(X), with DES trace
+    log.append(f"  X = Pm-1 XOR C(m-2) = {_bhex(X)}")           # Show X
+    log.append("  T = E(X) DES trace:")                          # Label for DES trace
+    log.append(_indent(tlog, "    "))         # Indent DES trace
+
+    Cm = T[:r]                                # C_m = first r bytes of T (the “stolen” bytes)
+    log.append(f"  Cm (partial) = first {r} bytes of T = {_bhex(Cm)}")  # Show Cm
+
+    Pm_prime = Pm + T[r:]                     # P_m' = P_m || tail(T), a full 8-byte block
+    log.append(f"  Pm' = Pm || tail(T) = {_bhex(Pm_prime)}")    # Show constructed P_m'
+
+    X2 = _xor_bytes(Pm_prime, C_prev)         # X2 = P_m' XOR C_{m-2}
+    Cm1, tlog2 = des_block_encrypt(X2, subkeys, trace=True)     # C_{m-1} = E(X2) with DES trace
+    log.append(f"  X2 = Pm' XOR C(m-2) = {_bhex(X2)}")          # Show X2
+    log.append("  Cm-1 = E(X2) DES trace:")                     # Label
+    log.append(_indent(tlog2, "    "))       # Indent internal DES trace
+
+    ct = C_before + Cm1 + Cm                  # Output order for CS3
+    log.append(f"Ciphertext = {_bhex(ct)} (same length as plaintext)")  # Final summary
+    return ct, "\n".join(log)                 # Return ciphertext and full trace
+
+def des_cbc_decrypt_cts_trace(cipher: bytes, subkeys: List[int], iv: bytes) -> Tuple[bytes, str]:
+    n = len(cipher)                           # Total ciphertext length
+    if n % BLOCK == 0:                        # If multiple of 8, use full-block tracing
+        pt, slog = des_cbc_decrypt_fullblocks_trace(cipher, subkeys, iv)
+        return pt, slog
+    r = n % BLOCK                             # Partial tail length (1..7)
+    log = [f"CBC-CTS DECRYPT (CS3), IV={_bhex(iv)}, len={n}, r={r}"]  # CTS header
+
+    before_len = n - BLOCK - r                # Bytes before last full+partial pair
+    C_before = cipher[:before_len]            # C1..C_{m-2}
+    Cm1 = cipher[before_len:before_len+BLOCK] # C_{m-1} full
+    Cm  = cipher[-r:]                         # C_m partial
+    log.append(f"- C_before bytes: {_bhex(C_before) if C_before else '(none)'}")  # Earlier ciphertext
+    log.append(f"  Cm-1 (full)    = {_bhex(Cm1)}")                                # Show C_{m-1}
+    log.append(f"  Cm   (partial) = {_bhex(Cm)}")                                 # Show C_m
+
+    P_before = b""                            # Placeholder for earlier CBC plaintext
+    if before_len > 0:
+        P_before, slog = des_cbc_decrypt_fullblocks_trace(C_before, subkeys, iv)  # Trace earlier CBC decryption
+        log.append(slog)                    # Append trace
+    C_prev = iv if before_len == 0 else C_before[-BLOCK:]   # C_{m-2}
+    log.append(f"  C(m-2) = {_bhex(C_prev)}")               # Show C_{m-2}
+
+    temp, tlog1 = des_block_decrypt(Cm1, subkeys, trace=True)  # temp = D(C_{m-1}) with DES trace
+    log.append("  D(Cm-1) DES trace:")                         # Label
+    log.append(_indent(tlog1, "    "))                         # Indent DES trace
+    Pm_prime = _xor_bytes(temp, C_prev)        # P_m' = D(C_{m-1}) XOR C_{m-2} = P_m || tail(T)
+    Pm = Pm_prime[:r]                          # Extract P_m (first r bytes)
+    tail = Pm_prime[r:]                        # tail(T) (remaining bytes)
+    log.append(f"  Pm' = D(Cm-1) XOR C(m-2) = {_bhex(Pm_prime)}")  # Show P_m'
+    log.append(f"  Pm  = first {r} bytes of Pm' = {_bhex(Pm)}")    # Show P_m
+    log.append(f"  tail(T) = {_bhex(tail)}")                       # Show tail(T)
+
+    T = Cm + tail                              # Rebuild T = C_m || tail(T)
+    U, tlog2 = des_block_decrypt(T, subkeys, trace=True)  # U = D(T) with DES trace
+    log.append(f"  T = Cm || tail(T) = {_bhex(T)}")        # Show T
+    log.append("  D(T) DES trace:")                          # Label
+    log.append(_indent(tlog2, "    "))                       # Indent
+    Pm1 = _xor_bytes(U, C_prev)                # Recover P_{m-1} = U XOR C_{m-2}
+    log.append(f"  Pm-1 = D(T) XOR C(m-2) = {_bhex(Pm1)}")  # Show P_{m-1}
+
+    pt = P_before + Pm1 + Pm                   # Full plaintext concatenation
+    log.append(f"Plaintext = {_bhex(pt)}")     # Final summary
+    return pt, "\n".join(log)                  # Return plaintext and full trace
+
+# ------------------------ CLI helpers ------------------------
+MENU = """\                                   # The interactive menu shown to the user
+==================== LOCK & KEY (Task 1) ====================
+1) Confidentiality Only (DES-CBC + CTS) — VERBOSE TRACE
+2) Auto Test (ECB vectors + CBC-CTS) — with a traced demo
+0) Exit
+=============================================================
+"""
+
+def _read_hex(prompt: str, n_hex: int=None) -> str:
+    s = input(prompt).strip().lower().replace("0x","")      # Read input, allow 0x prefix, keep lowercase
+    if any(c not in "0123456789abcdef" for c in s):         # Validate hex characters
+        raise ValueError("Not hex input")
+    if n_hex is not None and len(s) != n_hex:               # Enforce exact length if specified
+        raise ValueError(f"Expected exactly {n_hex} hex digits")
+    return s                                                # Return cleaned hex string (no 0x)
+
+def _read_hex_any(prompt: str) -> str:
+    s = input(prompt).strip().lower().replace("0x","")      # Read hex string (any even length)
+    if any(c not in "0123456789abcdef" for c in s) or len(s) == 0 or len(s) % 2 == 1:
+        raise ValueError("Provide an even number of hex digits")  # Need even-length hex to form bytes
+    return s                                                # Return validated hex string
+
+# ------------------------ Actions ------------------------
+def action_confidentiality_only_verbose():
+    print("\n*** Confidentiality Only (DES-CBC with CTS) — FULL TRACE ***")  # Header
+    mode = input("e=encrypt, d=decrypt > ").strip().lower()                   # Choose operation
+    key_hex = _read_hex("Key (16 hex chars incl. parity): ", 16)              # Read 64-bit DES key (with parity)
+    iv_hex  = _read_hex("IV (16 hex chars): ", 16)                            # Read 64-bit IV
+
+    # print round keys
+    subs, klog = key_schedule_from_hex(key_hex, verbose=True)                 # Generate 16 subkeys + verbose log
+    print("\n--- Key Schedule (Round Keys) ---")                              # Print key schedule section
+    print(klog)                                                               # Show each round key
+    iv = bytes.fromhex(iv_hex)                                                # Convert IV hex -> bytes
+
+    if mode == "e":                                                           # Encryption path
+        s = input("Plaintext (enter text OR 0x... hex): ").strip()            # Read plaintext (text or hex)
+        if s.lower().startswith("0x"):                                        # If hex mode...
+            h = s.lower().replace("0x","")                                    # Strip 0x
+            if len(h) == 0 or len(h) % 2 == 1 or any(c not in "0123456789abcdef" for c in h):
+                raise ValueError("Invalid hex plaintext")                     # Validate hex plaintext
+            msg = bytes.fromhex(h)                                            # Convert to bytes
+        else:
+            msg = s.encode("utf-8")                                           # Encode text as UTF-8 bytes
+        ct, tlog = des_cbc_encrypt_cts_trace(msg, subs, iv)                   # Encrypt with full CBC-CTS trace
+        print("\n--- CBC/CTS ENCRYPT TRACE ---")                              # Print encryption trace
+        print(tlog)
+        print("\nCiphertext (hex):", _bhex(ct))                               # Show result
+    elif mode == "d":                                                         # Decryption path
+        ct_hex = _read_hex_any("Ciphertext (hex, any length): ")              # Read ciphertext hex (any length)
+        ct = bytes.fromhex(ct_hex)                                            # To bytes
+        pt, tlog = des_cbc_decrypt_cts_trace(ct, subs, iv)                    # Decrypt with full trace
+        print("\n--- CBC/CTS DECRYPT TRACE ---")                              # Print decryption trace
+        print(tlog)
+        print("\nPlaintext (raw hex):", _bhex(pt))                            # Always show hex plaintext
+        try:
+            print("Plaintext (UTF-8):", pt.decode("utf-8"))                   # Try to show as UTF-8 text
+        except UnicodeDecodeError:
+            pass                                                              # If not valid UTF-8, skip
+    else:
+        print("Invalid choice.")                                              # Unknown mode
+
+# ---------- Original test suite (ECB professor vectors + CBC-CTS matrix) ----------
+def _t_hex(s: str) -> bytes:
+    s = s.strip().lower().replace("0x","")                                    # Normalize hex string
+    return bytes.fromhex(s)                                                   # To bytes
+
+def _pp(name: str, ok: bool):
+    print(f"[{'PASS' if ok else 'FAIL'}] {name}")                              # Pretty-print pass/fail line
+
+def _test_professor_vectors():
+    print("\n== ECB:  single-block vectors ==")                    # Section header
+    vectors = [                                                                # Known-answer tests (ECB)
+        ("0X133457799BBCDFF1","0X0101010101010101","0X882BED958A781608"),
+        ("0X882BED958A781608","0X1234567891011121","0X964F0E7269662737"),
+        ("0XF64F0E7269662737","0XA0A123987B6C6729","0X7660FDEED06029E4"),
+        ("0X7660FDEED06029E5","0XFFA987CD01111111","0XB0869A162CB87240"),
+        ("0X7660FDEED06029E5","0XFFA987CD01111115","0X0F7DDB091789C632"),
+        ("0X0101010101010101","0X882BED958A781608","0XFF693D198B690FA1"),
+        ("0XB0869A162CB87240","0X1234567891011121","0X5BE5CF8F3EBDC59F"),
+        ("0XB0869A162CB87240","0X7660FDEED06029E5","0XB206396E53814DE0"),
+        ("0XDEF1119876512345","0X1111111111111111","0XFA4183E1269C9F44"),
+        ("0X1111111100000000","0XFFFFFFFFEEEEEEEE","0XF7C82CF1F183BC42"),
+        ("0XEEEEEEFFEEEEEEFF","0X2222222233333333","0XF5F8CB50AC6D20EA"),
+        ("0X4444444466666666","0XEEEEEEFFEEEEEEFF","0X290FFD30C21F944D"),
+        ("0X5555555577777777","0X4444444466666666","0XB3940388486C8530"),
+        ("0X9999999977777777","0X5555555577777777","0XEEA866B385A43282"),
+        ("0X1111111199999999","0X9999999977777777","0X32E8ED4222003F2D"),
+        ("0X1011121314151617","0X2021222324252627","0X0070D2261D0B2BDA"),
+        ("0X3031323334353637","0X0000000055555555","0X61199364099B85B9"),
+        ("0X5051525354555657","0X6666666622222222","0XC8835F21452F28F9"),
+        ("0X4444444450555657","0X7777777777777777","0XD00E502960BD80C1"),
+        ("0X7676767676767676","0X1212121212121212","0X07E3B57BB0DE9D78"),
+        ("0XCAD1111199999999","0XDDDDCCCCDCDCDCDC","0X7EC1C5AA25EBFE8E"),
+        ("0XDFDFDFDFBABABABA","0XCCCCDDDD55555555","0X0597BC169E5D2E0E"),
+        ("0X5050505050505050","0X3131313131313131","0X62AAE04201C432C7"),
+        ("0X3030303030303030","0X9192939495969798","0XD39EFC3F3E330015"),
+        ("0X8787878787878787","0XCCCCCCCCAAAAAAAA","0XB8FD89997E73B702"),
+    ]
+    passed = 0                                                                  # Counter for passes
+    for i,(k_hex, pt_hex, ct_expect_hex) in enumerate(vectors, 1):              # Test each vector
+        subs, _ = key_schedule_from_hex(k_hex.replace("0x","").replace("0X",""), verbose=False)  # Build subkeys
+        ct, _ = des_block_encrypt(_t_hex(pt_hex), subs, trace=False)            # Encrypt one block
+        ok = ct.hex().upper() == _t_hex(ct_expect_hex).hex().upper()            # Compare to expected ciphertext
+        _pp(f"ECB vec {i}", ok)                                                 # Print PASS/FAIL
+        passed += int(ok)                                                       # Increment if passed
+    print(f"ECB summary: {passed}/{len(vectors)} passed\n")                     # Summary line
+    return passed, len(vectors)                                                 # Return stats
+
+def _rt_cbc_cts(name: str, msg: bytes, key_hex: str, iv_hex: str) -> bool:
+    subs, _ = key_schedule_from_hex(key_hex, verbose=False)                     # Subkeys from key
+    iv = _t_hex(iv_hex)                                                         # IV to bytes
+    ct = des_cbc_encrypt_cts(msg, subs, iv)                                     # Encrypt with CTS
+    pt = des_cbc_decrypt_cts(ct, subs, iv)                                      # Decrypt back
+    ok_len = len(ct) == len(msg)                                                # CTS must preserve length
+    ok_rt  = pt == msg                                                          # Round-trip must match
+    _pp(f"{name} (len={len(msg)})", ok_len and ok_rt)                           # Print PASS/FAIL
+    if not (ok_len and ok_rt):                                                  # On failure, show diagnostics
+        print("  CT:", ct.hex().upper())
+        print("  PT:", pt.hex().upper(), "| MSG:", msg.hex().upper())
+    return ok_len and ok_rt                                                     # Return result
+
+def _test_cbc_cts_matrix():
+    print("== CBC-CTS round-trip matrix ==")                                     # Section header
+    key1, iv1 = "133457799BBCDFF1", "0001020304050607"                           # Test key/IV #1
+    key2, iv2 = "0101010101010101", "A0A1A2A3A4A5A6A7"                           # Test key/IV #2
+    ok = 0; total = 0                                                            # Counters
+
+    total += 1; ok += int(_rt_cbc_cts("A: 8 bytes hex", _t_hex("0x9192939495969798"), key1, iv1))  # Plain CBC
+    total += 1; ok += int(_rt_cbc_cts("B: 16 bytes text", "DES_is_fun!__OK".encode(), key1, iv1))  # Plain CBC
+    total += 1; ok += int(_rt_cbc_cts("C: 9 bytes text", b"12345678X", key1, iv1))                 # CTS r=1
+    total += 1; ok += int(_rt_cbc_cts("D: 13 bytes text", b"Hello, world!", key1, iv1))            # CTS r=5
+    total += 1; ok += int(_rt_cbc_cts("E: 17 bytes mixed hex", _t_hex("0x2021222324252627")+_t_hex("0x3131313131313131")+b"A", key1, iv1))  # CTS r=1
+    total += 1; ok += int(_rt_cbc_cts("F: 43 bytes text", b"The quick brown fox jumps over the lazy dog", key1, iv1))  # CTS r=3
+    total += 1; ok += int(_rt_cbc_cts("G: UTF-8 text", "رمز✨آمن".encode("utf-8"), key1, iv1))     # CTS with multibyte UTF-8
+
+    print("\n== IV / Key sensitivity ==")                                        # Sensitivity checks
+    msg = b"Hello, CBC-CTS world!"                                               # Sample message
+    subs1, _ = key_schedule_from_hex(key1, verbose=False)                        # Subkeys for key1
+    c1 = des_cbc_encrypt_cts(msg, subs1, _t_hex(iv1))                            # Encrypt with IV1
+    c2 = des_cbc_encrypt_cts(msg, subs1, _t_hex(iv2))                            # Encrypt with IV2 (different)
+    _pp("I: different IVs -> different CT", c1 != c2); ok += int(c1 != c2); total += 1  # Expect different ciphertexts
+    subs2, _ = key_schedule_from_hex(key2, verbose=False)                        # Subkeys for key2
+    c3 = des_cbc_encrypt_cts(msg, subs1, _t_hex(iv1))                            # Encrypt with key1
+    c4 = des_cbc_encrypt_cts(msg, subs2, _t_hex(iv1))                            # Encrypt with key2 (same IV)
+    _pp("J: different keys -> different CT", c3 != c4); ok += int(c3 != c4); total += 1  # Expect different ciphertexts
+
+    print(f"\nCBC-CTS summary: {ok}/{total} passed\n")                           # Summary
+    return ok, total                                                             # Return stats
+
+def action_run_tests_verbose():
+    print("\n*** Running Auto Test ***")                                         # Header
+    e_ok, e_total = _test_professor_vectors()                                    # Run ECB vectors
+    c_ok, c_total = _test_cbc_cts_matrix()                                       # Run CBC-CTS tests
+    print(f"=== TOTAL ===")                                                      # Totals
+    print(f"ECB (professor): {e_ok}/{e_total}")
+    print(f"CBC-CTS:         {c_ok}/{c_total}")
+
+    # One fully traced CBC-CTS demo for screenshots:
+    print("\n--- Traced CBC-CTS Demo ---")                                       # Demo section
+    key_hex = "133457799BBCDFF1"                                                 # Use classic DES key
+    iv_hex  = "0001020304050607"                                                 # Simple IV for demo
+    msg     = b"Hello, world!"  # 13 bytes -> CTS path                            # Message with r=5
+    subs, klog = key_schedule_from_hex(key_hex, verbose=True)                    # Build subkeys + log
+    print("\nKey schedule:\n" + klog)                                            # Print key schedule
+    ct, enc_log = des_cbc_encrypt_cts_trace(msg, subs, bytes.fromhex(iv_hex))    # Encrypt with trace
+    print("\nEncrypt trace:\n" + enc_log)                                        # Show encryption trace
+    pt, dec_log = des_cbc_decrypt_cts_trace(ct, subs, bytes.fromhex(iv_hex))     # Decrypt with trace
+    print("\nDecrypt trace:\n" + dec_log)                                        # Show decryption trace
+    print("\nRound-trip check:", "OK" if pt == msg else "FAIL")                  # Verify round-trip
+    print("\nDone.\n")                                                           # End of demo
+
+# ------------------------ Main ------------------------
+def main():
+    while True:                                                                   # Loop until user exits
+        print(MENU)                                                               # Show menu
+        choice = input("> ").strip()                                              # Read choice
+        try:
+            if choice == "1":                                                     # Option 1: Confidentiality tool
+                action_confidentiality_only_verbose()
+            elif choice == "2":                                                   # Option 2: Auto tests
+                action_run_tests_verbose()
+            elif choice == "0":                                                   # Exit
+                break
+            else:
+                print("Invalid option.")                                          # Handle bad input
+        except Exception as e:                                                    # Catch and show errors gracefully
+            print("Error:", e)
+
+if __name__ == "__main__":                                                        # Script entry point
+    main()                                                                        # Run main loop
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+task2_rsa.py:
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Task 2 – RSA Keygen + Segmented Sign/Verify (SHA-256)
+- Prompts the user to generate RSA keys (two 10-digit primes + e).
+- Signs a message by hashing with SHA-256, converting to int, then
+  splitting that integer into chunks strictly smaller than n (segmentation),
+  and signing each chunk with RSA. (No padding – assignment allows any hash.)
+- Verifies by recomputing the same chunks from the message hash and
+  checking s_i^e ≡ chunk_i (mod n) for every i.
+- Prints parameters and step-by-step details for screenshots.
+"""
+
+from typing import Tuple, List
+from utils import gcd, modinv, powmod, is_prime_simple, sha256_int
+
+# ======== RSA primitives ========
+
+def rsa_keygen(p: int, q: int, e: int) -> Tuple[Tuple[int,int], Tuple[int,int], int]:
+    """
+    Returns (pub=(n,e), priv=(n,d), phi) after validating inputs.
+    Expects p and q to be primes, e to be coprime with phi=(p-1)(q-1).
+    """
+    if not is_prime_simple(p) or not is_prime_simple(q):
+        raise ValueError("p and q must be prime")
+    n = p * q
+    phi = (p - 1) * (q - 1)
+    if not (1 < e < phi):
+        raise ValueError("e must satisfy 1 < e < phi(n)")
+    if gcd(e, phi) != 1:
+        raise ValueError("e must be coprime with phi(n)")
+    d = modinv(e, phi)
+    return (n, e), (n, d), phi
+
+def rsa_encrypt_int(m: int, pub: Tuple[int,int]) -> int:
+    """ RSA encryption on a single integer representative (m must be in [0, n-1]). """
+    n, e = pub
+    if m < 0 or m >= n:
+        raise ValueError("Message integer out of range for RSA modulus")
+    return powmod(m, e, n)
+
+def rsa_decrypt_int(c: int, priv: Tuple[int,int]) -> int:
+    """ RSA decryption on a single integer representative. """
+    n, d = priv
+    return powmod(c, d, n)
+
+# ======== Segmentation helpers (for large hash integers) ========
+
+def _segment_int_for_n(x: int, n: int) -> List[int]:
+    """
+    Split integer x into big-endian chunks that are each < n, so
+    each chunk can be signed safely: s_i = chunk_i^d mod n.
+    We choose chunk size = (bitlen(n) - 1) to guarantee chunk < n.
+    """
+    if n <= 1:
+        raise ValueError("Invalid modulus n")
+    kbits = max(1, n.bit_length() - 1)    # strictly less than n
+    mask  = (1 << kbits) - 1
+    parts: List[int] = []
+    y = x
+    if y == 0:
+        parts.append(0)
+    else:
+        stack = []
+        while y > 0:
+            stack.append(y & mask)
+            y >>= kbits
+        parts = list(reversed(stack))      # big-endian order
+    return parts
+
+def rsa_sign_hash(h: int, priv: Tuple[int, int]) -> List[int]:
+    """
+    Sign an integer hash by segmenting into <n chunks and applying RSA per-chunk.
+    Returns list of signature integers [s1, s2, ...].
+    """
+    n, d = priv
+    chunks = _segment_int_for_n(h, n)
+    return [powmod(c, d, n) for c in chunks]
+
+def rsa_verify_hash(h: int, sigs: List[int], pub: Tuple[int, int]) -> bool:
+    """
+    Verify segmented signature: recompute chunks from hash and check s_i^e == chunk_i (mod n).
+    """
+    n, e = pub
+    chunks = _segment_int_for_n(h, n)
+    if len(chunks) != len(sigs):
+        return False
+    for c, s in zip(chunks, sigs):
+        if powmod(s, e, n) != c:
+            return False
+    return True
+
+def hash_message_to_int(msg: str) -> int:
+    """ Hash a UTF-8 message with SHA-256 and return big-endian integer. """
+    return sha256_int(msg)
+
+# ======== Pretty-print helpers ========
+
+def _hex(x: int) -> str:
+    return hex(x)[2:].upper()
+
+def _chunks_hex(chunks: List[int]) -> str:
+    return "[" + ", ".join("0x" + _hex(c) for c in chunks) + "]"
+
+def _sig_to_hexlist(sigs: List[int], n: int) -> str:
+    # width: number of hex nibbles to display uniformly
+    width = (n.bit_length() + 3) // 4
+    return "-".join(f"{s:0{width}X}" for s in sigs)
+
+def _sig_from_hexlist(s: str) -> List[int]:
+    toks = [t for t in s.replace(",", "-").split("-") if t.strip()]
+    return [int(t.strip(), 16) for t in toks]
+
+def _is_10_digit(n: int) -> bool:
+    return 1_000_000_000 <= n <= 9_999_999_999
+
+# ======== CLI ========
+
+MENU = """\
+==================== LOCK & KEY — Task 2 (RSA) ====================
+1) Generate RSA keys (two 10-digit primes + e)
+2) Sign a message (SHA-256 → segmented RSA)
+3) Verify a signature
+0) Exit
+==================================================================
+"""
+
+def action_keygen():
+    print("\n--- RSA Key Generation ---")
+    print("Please enter two PRIME numbers with exactly 10 digits each.")
+    p_str = input("p (10-digit prime): ").strip()
+    q_str = input("q (10-digit prime): ").strip()
+    e_str = input("e (public exponent, e.g. 65537): ").strip()
+
+    if not (p_str.isdigit() and q_str.isdigit() and e_str.isdigit()):
+        print("Error: p, q, e must be numeric.")
+        return None
+
+    p = int(p_str); q = int(q_str); e = int(e_str)
+
+    if not (_is_10_digit(p) and _is_10_digit(q)):
+        print("Error: p and q must be 10-digit numbers.")
+        return None
+
+    try:
+        pub, priv, phi = rsa_keygen(p, q, e)
+    except Exception as ex:
+        print("Key generation error:", ex)
+        return None
+
+    n, _ = pub
+    print("\nKey parameters:")
+    print(f"  p      = {p}")
+    print(f"  q      = {q}")
+    print(f"  n=pq   = {n}")
+    print(f"  phi(n) = {phi}")
+    print(f"  e      = {e}")
+    print(f"  d      = {priv[1]}")
+    print(f"  bitlen(n) = {n.bit_length()}  → chunk bits = bitlen(n)-1 = {n.bit_length()-1}")
+
+    return pub, priv
+
+def action_sign(state):
+    if state.get("pub") is None or state.get("priv") is None:
+        print("\nYou must generate RSA keys first (option 1).")
+        return
+    pub  = state["pub"]
+    priv = state["priv"]
+    n, e = pub
+
+    print("\n--- Digital Signature (segmented) ---")
+    msg = input("Message to sign (UTF-8): ")
+    h = hash_message_to_int(msg)
+    print(f"\nSHA-256(msg) = 0x{_hex(h)}")
+    chunks = _segment_int_for_n(h, n)
+    print(f"bitlen(n)={n.bit_length()}, chunk_bits={n.bit_length()-1}, chunks={len(chunks)}")
+    print(f"hash chunks = {_chunks_hex(chunks)}")
+
+    sigs = rsa_sign_hash(h, priv)
+    sig_hex = _sig_to_hexlist(sigs, n)
+    print("\nSignature (hex list, '-' separated):")
+    print(sig_hex)
+
+    # Quick self-check:
+    ok = rsa_verify_hash(h, sigs, pub)
+    print("\nSelf-verify:", "PASS ✅" if ok else "FAIL ❌")
+
+    # store last signature for convenience
+    state["last_msg"] = msg
+    state["last_sig"] = sigs
+
+def action_verify(state):
+    if state.get("pub") is None:
+        print("\nYou must generate RSA keys first (option 1).")
+        return
+    pub = state["pub"]
+    n, e = pub
+
+    print("\n--- Signature Verification ---")
+    msg = input("Original message (UTF-8): ")
+    sig_s = input("Paste signature hex list (same format shown after signing): ").strip()
+    try:
+        sigs = _sig_from_hexlist(sig_s)
+    except Exception:
+        print("Could not parse signature list.")
+        return
+
+    h = hash_message_to_int(msg)
+    print(f"\nSHA-256(msg) = 0x{_hex(h)}")
+    chunks = _segment_int_for_n(h, n)
+    print(f"Recomputed hash chunks = {_chunks_hex(chunks)}")
+    print(f"Chunks count: {len(chunks)} ; Signature parts: {len(sigs)}")
+
+    ok = rsa_verify_hash(h, sigs, pub)
+    print("\nVerification result:", "VALID ✅" if ok else "INVALID ❌")
+
+def main():
+    state = {"pub": None, "priv": None, "last_msg": None, "last_sig": None}
+    while True:
+        print(MENU)
+        choice = input("> ").strip()
+        try:
+            if choice == "1":
+                res = action_keygen()
+                if res is not None:
+                    pub, priv = res
+                    state["pub"] = pub
+                    state["priv"] = priv
+            elif choice == "2":
+                action_sign(state)
+            elif choice == "3":
+                action_verify(state)
+            elif choice == "0":
+                break
+            else:
+                print("Invalid option.")
+        except Exception as e:
+            print("Error:", e)
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+task3_cryptanalysis.py :
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Task 3: RSA short-message cryptanalysis demo (textbook RSA, no padding).
+"""
+
+from utils import powmod
+
+def short_message_attack(n: int, e: int, m: int, max_guess: int = 1000):
+    """Return (ciphertext, recovered_or_None)."""
+    c = powmod(m, e, n)
+    found = None
+    for guess in range(max_guess):
+        if powmod(guess, e, n) == c:
+            found = guess
+            break
+    return c, found
+
+
+
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Task 3 (short & focused): RSA short-message attack via brute force.
+- Textbook RSA (no padding)
+- Encrypt small m with (n, e)
+- Recover m by brute forcing all guesses m' in [0..n-1]
+- Verbose tracing for report/screenshots
+"""
+
+def rsa_encrypt_int(m: int, n: int, e: int, trace: bool = True) -> int:
+    """Textbook RSA encryption with optional trace."""
+    if not (0 <= m < n):
+        raise ValueError(f"Message must satisfy 0 <= m < n (got m={m}, n={n})")
+    if trace:
+        print(f"\n[Encrypt] m={m}, n={n}, e={e}")
+        print(f"  Compute m^e = {m}^{e} = {m**e}")
+        print(f"  Reduce modulo n: c = m^e mod n = {(m**e) % n}")
+    c = powmod(m, e, n)
+    if trace:
+        reduced = (m**e >= n)
+        print(f"  powmod result: c = {c}  ({'with' if reduced else 'no'} modular reduction)")
+    return c
+
+def brute_force_short_message(n: int, e: int, c: int, trace: True, peek: int = 30):
+    """
+    Naive brute force: test m' in [0..n-1] until powmod(m', e, n) == c.
+    Prints the first 'peek' tries, then announces the hit.
+    Returns the recovered m (or None if not found).
+    """
+    print(f"\n[Attack: Brute Force] Find m' s.t. (m')^e mod n == c ({c})")
+    for guess in range(n):
+        val = powmod(guess, e, n)
+        if guess < peek:
+            print(f"  try m'={guess:3d} -> (m')^e mod n = {val}")
+        if val == c:
+            print(f"  ==> Found match: m = {guess}")
+            return guess
+    print("  ==> No match in searched range (unexpected for two-digit n).")
+    return None
+
+# ----------------- Demo & CLI -----------------
+
+def demo(n: int, e: int, m: int):
+    print(f"\n=== DEMO: n={n}, e={e}, m={m} ===")
+    c = rsa_encrypt_int(m, n, e, trace=True)
+    rec = brute_force_short_message(n, e, c, trace=True)
+    ok = (rec == m)
+    print(f"\n[Check] recovered m = {rec}  | expected m = {m}  | {'PASS ✅' if ok else 'FAIL ❌'}")
+    print("=== END DEMO ===\n")
+
+MENU = """\
+==================== LOCK & KEY — Task 3 (Short RSA Attack) ====================
+1) Demo A: n=77, e=3, m=4    (very small m; no mod reduction)
+2) Demo B: n=77, e=3, m=42   (mod reduction; still trivial)
+3) Custom (enter n, e, m)
+0) Exit
+===============================================================================
+"""
+
+def main():
+    while True:
+        print(MENU)
+        choice = input("> ").strip()
+        try:
+            if choice == "1":
+                demo(n=77, e=3, m=4)     # c = 64
+            elif choice == "2":
+                demo(n=77, e=3, m=42)    # c = 14
+            elif choice == "3":
+                n = int(input("n (two-digit recommended, e.g. 77): ").strip())
+                e = int(input("e (small, e.g. 3 or 5): ").strip())
+                m_in = input("m (int 0..n-1, hex like 0x2A, or single char): ").strip()
+                # parse m (allow small conveniences)
+                if m_in.lower().startswith("0x"):
+                    m = int(m_in, 16)
+                elif m_in.isdigit():
+                    m = int(m_in)
+                else:
+                    if len(m_in) == 0:
+                        raise ValueError("Empty message")
+                    m = ord(m_in[0])  # first char ASCII
+                demo(n, e, m)
+            elif choice == "0":
+                break
+            else:
+                print("Invalid option.")
+        except Exception as err:
+            print("Error:", err)
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+task4_image.py :
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Task 4: Image encryption with DES in ECB and CBC — both using CTS (Ciphertext Stealing).
+- Reuses Task 1 primitives: key_schedule_from_hex, des_block_encrypt, des_block_decrypt,
+  des_cbc_encrypt_cts, des_cbc_decrypt_cts (imported from task1_des).
+- Adds ECB+CTS (encrypt/decrypt) for arbitrary bytes.
+- Reads RGB image -> encrypts raw RGB bytes -> saves lossless PNGs to visualize patterns.
+
+USAGE:
+  python task4_images.py
+  1) Encrypt image -> ECB+CTS and CBC+CTS (out_ecb.png, out_cbc.png)
+  2) Decrypt image (choose ECB/CBC)
+"""
+
+from typing import List, Tuple
+import os
+
+# ---------- Pillow for image I/O ----------
+try:
+    from PIL import Image
+except Exception:
+    Image = None
+
+# ---------- Reuse your Task-1 DES code ----------
+# Make sure your Task 1 file is saved as: task1_des.py
+# (The names below match the functions you already have.)
+from task1_des import (
+    key_schedule_from_hex,
+    des_block_encrypt, des_block_decrypt,   # 8-byte block DES
+    des_cbc_encrypt_cts, des_cbc_decrypt_cts  # CBC + CTS over bytes
+)
+
+BLOCK = 8  # DES block size
+
+# ---------- Small helpers ----------
+def _xor(a: bytes, b: bytes) -> bytes:
+    return bytes(x ^ y for x, y in zip(a, b))
+
+def _split_blocks(data: bytes, size: int) -> List[bytes]:
+    return [data[i:i+size] for i in range(0, len(data), size)]
+
+def _bhex(b: bytes) -> str:
+    return b.hex().upper()
+
+def _read_rgb_bytes(path: str) -> Tuple[bytes, int, int, str]:
+    if Image is None:
+        raise RuntimeError("Pillow (PIL) is not installed. Install with: pip install Pillow")
+    img = Image.open(path).convert("RGB")
+    w, h = img.size
+    mode = "RGB"
+    data = img.tobytes()  # w*h*3 bytes
+    return data, w, h, mode
+
+def _write_rgb_bytes(path: str, data: bytes, w: int, h: int, mode: str = "RGB") -> None:
+    if Image is None:
+        raise RuntimeError("Pillow (PIL) is not installed. Install with: pip install Pillow")
+    Image.frombytes(mode, (w, h), data).save(path)
+
+# ---------- Reuse Task-1 block wrappers (no trace) ----------
+def _des_ecb_encrypt_block(block8: bytes, subkeys: List[int]) -> bytes:
+    ct, _ = des_block_encrypt(block8, subkeys, trace=False)
+    return ct
+
+def _des_ecb_decrypt_block(block8: bytes, subkeys: List[int]) -> bytes:
+    pt, _ = des_block_decrypt(block8, subkeys, trace=False)
+    return pt
+
+# ---------- ECB + CTS over arbitrary bytes (new here) ----------
+def ecb_cts_encrypt_bytes(plain: bytes, subkeys: List[int]) -> bytes:
+    n = len(plain)
+    if n == 0:
+        return b""
+    if n < BLOCK:
+        raise ValueError("ECB-CTS needs at least one full block (>= 9 bytes to have a partial tail).")
+    if n % BLOCK == 0:
+        out = bytearray()
+        for blk in _split_blocks(plain, BLOCK):
+            out += _des_ecb_encrypt_block(blk, subkeys)
+        return bytes(out)
+
+    r = n % BLOCK
+    before_len = (n - r) - BLOCK
+    before = plain[:before_len]
+    Pm1 = plain[before_len:before_len+BLOCK]
+    Pm  = plain[-r:]
+
+    C_before = bytearray()
+    for blk in _split_blocks(before, BLOCK):
+        if not blk:
+            continue
+        C_before += _des_ecb_encrypt_block(blk, subkeys)
+
+    T = _des_ecb_encrypt_block(Pm1, subkeys)
+    Cm = T[:r]
+    Pm_prime = Pm + T[r:]
+    Cm1 = _des_ecb_encrypt_block(Pm_prime, subkeys)
+
+    return bytes(C_before) + Cm1 + Cm
+
+def ecb_cts_decrypt_bytes(cipher: bytes, subkeys: List[int]) -> bytes:
+    n = len(cipher)
+    if n == 0:
+        return b""
+    if n < BLOCK:
+        raise ValueError("ECB-CTS needs at least one full block.")
+    if n % BLOCK == 0:
+        out = bytearray()
+        for c in _split_blocks(cipher, BLOCK):
+            out += _des_ecb_decrypt_block(c, subkeys)
+        return bytes(out)
+
+    r = n % BLOCK
+    before_len = n - BLOCK - r
+    C_before = cipher[:before_len]
+    Cm1 = cipher[before_len:before_len+BLOCK]
+    Cm  = cipher[-r:]
+
+    P_before = bytearray()
+    for c in _split_blocks(C_before, BLOCK):
+        if not c:
+            continue
+        P_before += _des_ecb_decrypt_block(c, subkeys)
+
+    Pm_prime = _des_ecb_decrypt_block(Cm1, subkeys)  # = Pm || tail(T)
+    Pm  = Pm_prime[:r]
+    tail = Pm_prime[r:]
+    T = Cm + tail
+    Pm1 = _des_ecb_decrypt_block(T, subkeys)
+
+    return bytes(P_before) + Pm1 + Pm
+
+# ---------- High-level image API ----------
+def encrypt_image_ecb_and_cbc_with_cts(inpath: str, key_hex: str, iv_hex: str) -> Tuple[str, str]:
+    print(f"\n[+] Loading image: {inpath}")
+    data, w, h, mode = _read_rgb_bytes(inpath)
+    print(f"    size: {w}x{h}, mode={mode}, bytes={len(data)}")
+
+    key_hex = key_hex.replace("0x","").replace("0X","")
+    iv_hex  = iv_hex.replace("0x","").replace("0X","")
+    if len(key_hex) != 16:
+        raise ValueError("Key must be 16 hex characters (DES 64-bit incl. parity).")
+    if len(iv_hex) != 16:
+        raise ValueError("IV must be 16 hex characters (8 bytes).")
+
+    subkeys, _ = key_schedule_from_hex(key_hex, verbose=False)
+    iv = bytes.fromhex(iv_hex)
+
+    print("[*] Encrypting (ECB+CTS)...")
+    ecb_ct = ecb_cts_encrypt_bytes(data, subkeys)
+    out_ecb = "out_ecb.png"
+    _write_rgb_bytes(out_ecb, ecb_ct[:len(data)], w, h, mode)
+    print(f"    -> {out_ecb}")
+
+    print("[*] Encrypting (CBC+CTS)...")
+    cbc_ct = des_cbc_encrypt_cts(data, subkeys, iv)   # Reused from Task 1
+    out_cbc = "out_cbc.png"
+    _write_rgb_bytes(out_cbc, cbc_ct[:len(data)], w, h, mode)
+    print(f"    -> {out_cbc}")
+
+    print("\nTip: ECB will show block patterns; CBC should look like random noise.")
+    return out_ecb, out_cbc
+
+def decrypt_image_with_mode(inpath_ct: str, key_hex: str, iv_hex: str, mode_name: str, outpath: str) -> str:
+    print(f"\n[+] Loading encrypted image: {inpath_ct}")
+    cdata, w, h, mode = _read_rgb_bytes(inpath_ct)
+    print(f"    size: {w}x{h}, mode={mode}, bytes={len(cdata)}")
+
+    key_hex = key_hex.replace("0x","").replace("0X","")
+    iv_hex  = iv_hex.replace("0x","").replace("0X","")
+    subkeys, _ = key_schedule_from_hex(key_hex, verbose=False)
+    iv = bytes.fromhex(iv_hex)
+
+    m = mode_name.strip().upper()
+    if m == "ECB":
+        print("[*] Decrypting (ECB+CTS)...")
+        pt = ecb_cts_decrypt_bytes(cdata, subkeys)
+    elif m == "CBC":
+        print("[*] Decrypting (CBC+CTS)...")
+        pt = des_cbc_decrypt_cts(cdata, subkeys, iv)  # Reused from Task 1
+    else:
+        raise ValueError("mode_name must be 'ECB' or 'CBC'.")
+
+    _write_rgb_bytes(outpath, pt[:len(cdata)], w, h, mode)
+    print(f"    -> {outpath}")
+    return outpath
+
+# ---------- CLI ----------
+MENU = """\
+==================== LOCK & KEY — Task 4 (Images) ====================
+1) Encrypt image -> ECB+CTS and CBC+CTS (produce out_ecb.png, out_cbc.png)
+2) Decrypt image (choose ECB/CBC) back to RGB
+0) Exit
+=====================================================================
+"""
+
+def main():
+    while True:
+        print(MENU)
+        ch = input("> ").strip()
+        try:
+            if ch == "1":
+                inpath = input("Input image path (e.g., test_image.jpg): ").strip()
+                key_hex = input("Key (16 hex chars, e.g., 133457799BBCDFF1): ").strip()
+                iv_hex  = input("IV  (16 hex chars, e.g., 0001020304050607): ").strip()
+                ecb, cbc = encrypt_image_ecb_and_cbc_with_cts(inpath, key_hex, iv_hex)
+                print(f"\nDone. Saved:\n  - {ecb}\n  - {cbc}\n")
+            elif ch == "2":
+                inpath = input("Encrypted image path: ").strip()
+                mode   = input("Mode used (ECB or CBC): ").strip()
+                key_hex = input("Key (16 hex chars): ").strip()
+                iv_hex  = input("IV  (16 hex chars): ").strip()
+                outpath = input("Output path (e.g., recovered.png): ").strip()
+                decrypt_image_with_mode(inpath, key_hex, iv_hex, mode, outpath)
+            elif ch == "0":
+                break
+            else:
+                print("Invalid option.")
+        except Exception as e:
+            print("Error:", e)
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+utils.py:
+
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Shared utilities: number theory, hex helpers, and simple wrappers.
+"""
+
+import math
+import hashlib
+from typing import Tuple, List
+
+# ================= Number theory / math =================
+
+def egcd(a: int, b: int) -> Tuple[int, int, int]:
+    if b == 0:
+        return (a, 1, 0)
+    g, x1, y1 = egcd(b, a % b)
+    return (g, y1, x1 - (a // b) * y1)
+
+def gcd(a: int, b: int) -> int:
+    while b:
+        a, b = b, a % b
+    return abs(a)
+
+def modinv(a: int, n: int) -> int:
+    g, x, _ = egcd(a, n)
+    if g != 1:
+        raise ValueError("No modular inverse")
+    return x % n
+
+def powmod(a: int, e: int, n: int) -> int:
+    result = 1
+    a %= n
+    for bit in bin(e)[2:]:
+        result = (result * result) % n
+        if bit == '1':
+            result = (result * a) % n
+    return result
+
+def is_prime_simple(n: int) -> bool:
+    if n < 2:
+        return False
+    if n == 2:
+        return True
+    if n % 2 == 0:
+        return False
+    max_divisor = int(math.isqrt(n)) + 1
+    for i in range(3, max_divisor, 2):
+        if n % i == 0:
+            return False
+    return True
+
+# ================= Hash helper =================
+
+def sha256_int(msg: str) -> int:
+    return int.from_bytes(hashlib.sha256(msg.encode('utf-8')).digest(), 'big')
+
+# ================= Bytes/hex helpers =================
+
+def hex_to_bytes(s: str) -> bytes:
+    if s is None:
+        raise ValueError("Empty hex string")
+    s = s.strip().lower()
+    for ch in (" ", ":", "-"):
+        s = s.replace(ch, "")
+    if s.startswith("0x"):
+        s = s[2:]
+    if len(s) % 2 == 1:
+        s = "0" + s
+    try:
+        return bytes.fromhex(s)
+    except ValueError:
+        raise ValueError(f"Invalid hex string: {s}")
+
+def bytes_to_hex(b: bytes) -> str:
+    return b.hex().upper()
+
+
+
+
+
+
+
+
+
+
+
+
+
+main.py :
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+LOCK && KEY — unified launcher (main.py)
+
+Combines:
+  1) Confidentiality Only (DES-CBC + CTS)          -> task1_des
+  2) Authentication Only (RSA signatures)          -> task2_rsa
+  3) Confidentiality & Authentication (combined)   -> task1_des + task2_rsa
+  4) RSA cryptanalysis (short-message brute force) -> task3_cryptanalysis
+  5) Image encryption (ECB/CBC + CTS)              -> task4_images
+"""
+
+import sys
+
+# ===== Task 1 (DES) =====
+from task1_des import (
+    action_confidentiality_only_verbose,
+    key_schedule_from_hex,
+    des_cbc_encrypt_cts, des_cbc_decrypt_cts,
+)
+
+# ===== Task 2 (RSA sign/verify with segmentation) =====
+from task2_rsa import (
+    action_keygen, action_sign, action_verify,   # their CLI helpers
+    rsa_keygen, hash_message_to_int, rsa_sign_hash, rsa_verify_hash,
+    _sig_to_hexlist, _sig_from_hexlist
+)
+
+# ===== Task 3 (RSA cryptanalysis demo) =====
+# We'll call its demo scenarios directly
+from task3_cryptanalysis import demo as rsa_demo
+
+# ===== Task 4 (Images) =====
+from task4_image import (
+    encrypt_image_ecb_and_cbc_with_cts,
+    decrypt_image_with_mode,
+)
+
+# ========= Pretty helpers =========
+def _bhex(b: bytes) -> str:
+    return b.hex().upper()
+
+def _read_hex_exact(prompt: str, n_hex: int) -> str:
+    s = input(prompt).strip().lower().replace("0x", "")
+    if len(s) != n_hex or any(c not in "0123456789abcdef" for c in s):
+        raise ValueError(f"Expected exactly {n_hex} hex chars (got '{s}')")
+    return s
+
+def _read_hex_any(prompt: str) -> str:
+    s = input(prompt).strip().lower().replace("0x", "")
+    if len(s) == 0 or (len(s) % 2) == 1 or any(c not in "0123456789abcdef" for c in s):
+        raise ValueError("Provide non-empty, even-length hex")
+    return s
+
+# ========= Sub-menus =========
+
+def menu_authentication_only(state):
+    """
+    Tiny wrapper around Task-2 menu actions to keep keys across calls.
+    """
+    MENU = """\
+==================== AUTHENTICATION ONLY (Task 2) ====================
+1) Generate RSA keys (two 10-digit primes + e)
+2) Sign a message (SHA-256 → segmented RSA)
+3) Verify a signature
+0) Back
+======================================================================
+"""
+    while True:
+        print(MENU)
+        ch = input("> ").strip()
+        try:
+            if ch == "1":
+                res = action_keygen()
+                if res is not None:
+                    pub, priv = res
+                    state["pub"] = pub
+                    state["priv"] = priv
+            elif ch == "2":
+                action_sign(state)
+            elif ch == "3":
+                action_verify(state)
+            elif ch == "0":
+                return
+            else:
+                print("Invalid option.")
+        except Exception as e:
+            print("Error:", e)
+
+def menu_conf_and_auth(state):
+    """
+    Combined flow:
+      - Sign-then-Encrypt (plaintext signed with RSA, then plaintext encrypted with DES-CBC-CTS)
+      - Decrypt-then-Verify (DES decrypt then verify RSA signature)
+    Reuses Task-1 (DES) + Task-2 (RSA) primitives.
+    """
+    if state.get("pub") is None or state.get("priv") is None:
+        print("\n[Info] You must generate RSA keys first.")
+        res = action_keygen()
+        if res is None:
+            return
+        pub, priv = res
+        state["pub"] = pub
+        state["priv"] = priv
+
+    print("\n*** CONFIDENTIALITY & AUTHENTICATION ***")
+    mode = input("e = sign+encrypt, d = decrypt+verify > ").strip().lower()
+
+    try:
+        key_hex = _read_hex_exact("DES key (16 hex chars incl. parity): ", 16)
+        iv_hex  = _read_hex_exact("DES IV  (16 hex chars): ", 16)
+        subkeys, _ = key_schedule_from_hex(key_hex, verbose=False)
+        iv = bytes.fromhex(iv_hex)
+
+        if mode == "e":
+            # --- Sign plaintext, then encrypt plaintext with DES-CBC-CTS ---
+            msg = input("Plaintext message (UTF-8): ")
+            pt = msg.encode("utf-8")
+
+            # RSA sign (segmented SHA-256)
+            h = hash_message_to_int(msg)
+            sigs = rsa_sign_hash(h, state["priv"])
+            sig_hexlist = _sig_to_hexlist(sigs, state["pub"][0])
+
+            # DES encrypt (CBC+CTS)
+            ct = des_cbc_encrypt_cts(pt, subkeys, iv)
+
+            print("\n--- OUTPUT (send these to the receiver) ---")
+            print("Ciphertext (hex):", _bhex(ct))
+            print("Signature (segmented hex list):", sig_hexlist)
+            print("Note: We used Sign-then-Encrypt (signature covers the *plaintext*).")
+
+        elif mode == "d":
+            # --- Decrypt ciphertext, then verify signature over recovered plaintext ---
+            ct_hex = _read_hex_any("Ciphertext (hex, any length): ")
+            sig_in = input("Signature (segmented hex list, '-' separated): ").strip()
+            sigs   = _sig_from_hexlist(sig_in)
+            ct = bytes.fromhex(ct_hex)
+
+            # DES decrypt
+            pt = des_cbc_decrypt_cts(ct, subkeys, iv)
+
+            # Verify RSA signature
+            try:
+                msg = pt.decode("utf-8")
+            except UnicodeDecodeError:
+                print("\n[Warn] Decrypted bytes are not valid UTF-8; verification expects text.")
+                return
+            h = hash_message_to_int(msg)
+            ok = rsa_verify_hash(h, sigs, state["pub"])
+
+            print("\n--- RESULT ---")
+            print("Plaintext (UTF-8):", msg)
+            print("Signature verification:", "VALID ✅" if ok else "INVALID ❌")
+        else:
+            print("Invalid choice.")
+    except Exception as e:
+        print("Error:", e)
+
+def menu_rsa_cryptanalysis():
+    """
+    Wrap Task-3 demo scenarios.
+    """
+    MENU = """\
+==================== RSA CRYPTANALYSIS (Task 3) ====================
+1) Demo A: n=77, e=3, m=4
+2) Demo B: n=77, e=3, m=42
+3) Custom (enter n, e, m)
+0) Back
+====================================================================
+"""
+    while True:
+        print(MENU)
+        ch = input("> ").strip()
+        try:
+            if ch == "1":
+                rsa_demo(n=77, e=3, m=4)
+            elif ch == "2":
+                rsa_demo(n=77, e=3, m=42)
+            elif ch == "3":
+                n = int(input("n (two-digit recommended, e.g. 77): ").strip())
+                e = int(input("e (small, e.g. 3 or 5): ").strip())
+                m_in = input("m (int 0..n-1, hex like 0x2A, or single char): ").strip()
+                if m_in.lower().startswith("0x"):
+                    m = int(m_in, 16)
+                elif m_in.isdigit():
+                    m = int(m_in)
+                else:
+                    if len(m_in) == 0:
+                        raise ValueError("Empty message")
+                    m = ord(m_in[0])
+                rsa_demo(n=n, e=e, m=m)
+            elif ch == "0":
+                return
+            else:
+                print("Invalid option.")
+        except Exception as e:
+            print("Error:", e)
+
+def menu_images():
+    """
+    Wrap Task-4 image encryption helpers.
+    """
+    MENU = """\
+==================== IMAGE ENCRYPTION (Task 4) ====================
+1) Encrypt image -> ECB+CTS and CBC+CTS  (out_ecb.png, out_cbc.png)
+2) Decrypt image (ECB or CBC) back to RGB
+0) Back
+==================================================================
+"""
+    while True:
+        print(MENU)
+        ch = input("> ").strip()
+        try:
+            if ch == "1":
+                inpath = input("Input image path (e.g., test_image.jpg): ").strip()
+                key_hex = input("DES key (16 hex chars, e.g., 133457799BBCDFF1): ").strip()
+                iv_hex  = input("IV      (16 hex chars, e.g., 0001020304050607): ").strip()
+                ecb, cbc = encrypt_image_ecb_and_cbc_with_cts(inpath, key_hex, iv_hex)
+                print(f"\nSaved:\n  - {ecb}\n  - {cbc}\n")
+            elif ch == "2":
+                inpath = input("Encrypted image path: ").strip()
+                mode   = input("Mode used (ECB or CBC): ").strip()
+                key_hex = input("DES key (16 hex chars): ").strip()
+                iv_hex  = input("IV      (16 hex chars): ").strip()
+                outpath = input("Output path (e.g., recovered.png): ").strip()
+                decrypt_image_with_mode(inpath, key_hex, iv_hex, mode, outpath)
+            elif ch == "0":
+                return
+            else:
+                print("Invalid option.")
+        except Exception as e:
+            print("Error:", e)
+
+# ========= Top-level menu =========
+
+MAIN_MENU = """\
+***** LOCK && KEY *****
+1. Confidentiality Only (DES from scratch; CBC + CTS)
+2. Authentication Only (RSA signatures)
+3. Confidentiality & Authentication (combine 1 + 2)
+4. RSA cryptanalysis (short-message brute force)
+5. Image encryption (ECB/CBC with CTS)
+0. Exit
+************************
+"""
+
+def main():
+    # Shared RSA state (so option 2 and 3 can reuse generated keys)
+    state = {"pub": None, "priv": None, "last_msg": None, "last_sig": None}
+
+    while True:
+        print(MAIN_MENU)
+        ch = input("> ").strip()
+        try:
+            if ch == "1":
+                # Reuse Task-1's own interactive flow with tracing
+                action_confidentiality_only_verbose()
+            elif ch == "2":
+                menu_authentication_only(state)
+            elif ch == "3":
+                menu_conf_and_auth(state)
+            elif ch == "4":
+                menu_rsa_cryptanalysis()
+            elif ch == "5":
+                menu_images()
+            elif ch == "0":
+                break
+            else:
+                print("Invalid option.")
+        except KeyboardInterrupt:
+            print("\nInterrupted.")
+        except Exception as e:
+            print("Error:", e)
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+
+
+
