@@ -4,6 +4,98 @@ Short, professional summaries suitable for a personal portfolio website.
 
 ---
 
+## Portfolio Layout Guide
+
+Use these 8 categories as sections/tabs on your portfolio website. They are ordered strategically -- **lead with offensive security** (the most eye-catching for cybersecurity roles), end with supporting skills that round out your profile.
+
+### Category 1: Offensive Security & Penetration Testing
+| # | Project | Highlights |
+|---|---------|-----------|
+| 21 | Full-Stack Penetration Testing & Exploit Development | Buffer overflow exploit (7 phases), reverse shell, network pivoting, 9 CTF challenges |
+| 13 | DPSR Penetration Test | Nmap, Nessus, Shodan, OWASP Top 10, Metasploit |
+
+### Category 2: Digital Forensics & Incident Response
+| # | Project | Highlights |
+|---|---------|-----------|
+| 17 | Digital Forensics Investigation | VHD repair at byte level, steganography discovery, forensic timeline, UK legal standards |
+
+### Category 3: Cryptography & Secure Communication
+| # | Project | Highlights |
+|---|---------|-----------|
+| 14 | Lock & Key - Cryptographic Communication System | DES + RSA from scratch, 34/34 test vectors, image encryption, cryptanalysis |
+| 6 | RSA Cryptography & Hash Function Implementation | RSA manual implementation, MATLAB hash functions, C geometry |
+
+### Category 4: Secure Software Development
+| # | Project | Highlights |
+|---|---------|-----------|
+| 19 | ShipTrack - Secure Package Delivery Application | PBKDF2, STRIDE threat model, 106 JUnit tests, Jazzer fuzz testing, PMD |
+| 1 | Car Shop Desktop Application | Java OOP, Swing GUI, event-driven programming |
+| 4 | Campus Management System | Custom data structures, Dijkstra's algorithm, Big-O analysis |
+| 5 | Donor Tracking Database System | MySQL, normalization (1NF-3NF), stored procedures, RBAC |
+
+### Category 5: Network & Cloud Infrastructure Security
+| # | Project | Highlights |
+|---|---------|-----------|
+| 11 | Multi-Site Secure Network with VPN & Firewall | IPSec VPN, Cisco ASA, DMZ, ACLs, AAA, DHCP snooping |
+| 2 | Multi-Site Enterprise Network Design | 7-office VLSM network, RIPv2, 5 services, security hardening |
+| 20 | AWS Cloud Infrastructure & Serverless Application | Multi-AZ VPC, Auto Scaling, Lambda, DynamoDB, Amplify CI/CD |
+| 12 | Operating Systems Administration | Linux sysadmin, Docker, scheduling algorithms, permissions |
+
+### Category 6: Security Governance, Risk & Compliance (GRC)
+| # | Project | Highlights |
+|---|---------|-----------|
+| 18 | Cyber Risk Assessment - Online Examination System | STRIDE, DREAD, FAIR quantitative analysis, NIST CSF |
+| 10 | Information Security Management System Design | COBIT 2019, ISO 27001, PDCA, audit planning |
+| 3 | Corporate Security Assessment & Policy Design | ISO 31000, GDPR, HIPAA, 3 security policies, disaster recovery |
+
+### Category 7: AI, Machine Learning & Cybersecurity Research
+| # | Project | Highlights |
+|---|---------|-----------|
+| 22 | Phishing URL Detection Research Paper | XGBoost 99.93% accuracy, SHAP, user survey, academic publication |
+| 15 | AI/ML Pipeline for Logistics Optimization | KNN 91.98%, neural network, Azure ML deployment, SHAP |
+| 25 | Emergency Response Analytics & Optimization | Genetic algorithm, predictive modeling, prescriptive analytics |
+| 24 | E-Commerce Business Intelligence Solution | Power BI, data visualization, marketing analytics |
+
+### Category 8: Project Management & Professional Development
+| # | Project | Highlights |
+|---|---------|-----------|
+| 9 | AI Threat Detection System - Project Management Plan | Real company (Green Circle), WBS, Gantt, $30K budget, Agile |
+| 8 | Tourism Booking System with Full SDLC Documentation | SRS, SDS, DFD, RTM, NASA/FAA case studies |
+| 16 | VerifAI - Startup Business Plan | Design thinking, TAM/SAM/SOM, 5-year financials, pitch deck |
+| 7 | Professional Training Event Planning | 500+ attendees, JD 150K budget, root cause analysis |
+| 23 | Computer Architecture Design & Assembly Programming | Assembly, K-maps, pipelining, RISC vs CISC |
+
+### Suggested Portfolio Website Structure
+
+```
+Homepage
+  |-- Hero: "Cybersecurity Engineer" + short bio + top 3 skills
+  |
+  |-- Projects (use tabs or filter buttons for categories)
+  |     |-- [Offensive Security]        ← 2 projects (lead with this)
+  |     |-- [Forensics & IR]            ← 1 project
+  |     |-- [Cryptography]              ← 2 projects
+  |     |-- [Secure Development]        ← 4 projects
+  |     |-- [Network & Cloud Security]  ← 4 projects
+  |     |-- [GRC & Risk Management]     ← 3 projects
+  |     |-- [AI & ML Research]          ← 4 projects
+  |     |-- [Management & Business]     ← 5 projects
+  |
+  |-- Skills (pull from LINKEDIN_PROJECTS.md skills list)
+  |-- About / Resume
+  |-- Contact
+```
+
+> **Tip:** On each project card, show only the project title, tech tags, and a 1-line teaser. Clicking it should expand to the full summary below. This keeps the page clean while showing the volume of your work.
+
+---
+
+## Project Summaries
+
+Below are the individual summaries to use inside each category card.
+
+---
+
 ## 1. Car Shop Desktop Application
 **Tech:** Java, Swing GUI
 
