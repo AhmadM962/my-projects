@@ -1,241 +1,128 @@
 # LinkedIn Projects & Skills Guide
 
 Ready-to-use content for your LinkedIn profile.
+For full details on all projects, see: https://github.com/AhmadM962/my-projects
 
 ---
 
 ## How to Use This File
 
-1. **Projects Section:** Copy each project's title, summary, and date into LinkedIn's "Projects" section
+1. **Projects Section:** Copy each project's title, summary, and date into LinkedIn's "Projects" section (7 entries total: 5 top projects + 2 umbrella collections)
 2. **Skills Section:** Use the consolidated skills list at the bottom to add to your LinkedIn skills
 3. **Media:** You can upload your report files (.docx/.pdf) as media attachments on each project
+4. **Link:** Add your GitHub repo link to each project so recruiters can explore further
 
 ---
 
-## LinkedIn Projects
-
-### 1. Car Shop Desktop Application (Java)
-**Date:** Spring 2024 | **Associated with:** Al Hussein Technical University
-
-Built a Java desktop application for a car dealership featuring inventory management, loan payment calculators with monthly schedules, and an admin panel. Implemented using OOP principles (abstract classes, inheritance, polymorphism) with a Java Swing event-driven GUI.
-
-**Skills:** Java, Object-Oriented Programming, GUI Development, Software Development
+## LinkedIn Projects (7 Entries: 5 Top Projects + 2 Collections)
 
 ---
 
-### 2. DataTech Multi-Site Enterprise Network
-**Date:** Spring 2024 | **Associated with:** Al Hussein Technical University
-
-Designed and implemented a 7-office enterprise network across the Middle East using Cisco Packet Tracer. Configured VLSM subnetting, RIPv2 routing, five network services (DHCP, DNS, FTP, HTTP, Email), and network security measures.
-
-**Skills:** Cisco Packet Tracer, Network Design, VLSM, Routing Protocols, Network Services
+### WHY THESE 5: These are the projects that will make a cybersecurity hiring manager stop scrolling. Each one demonstrates a different core competency that employers look for.
 
 ---
 
-### 3. Sofix Company Security Assessment
-**Date:** Summer 2024 | **Associated with:** Al Hussein Technical University
+## Top 5 Projects
 
-Conducted a comprehensive security assessment covering 17 infrastructure observations. Produced a risk register, GDPR/HIPAA compliance analysis, and three security policies (email, wireless, disaster recovery) using ISO 31000 framework.
+### 1. Penetration Testing & Exploit Development (HtuCrackers)
+**Date:** 2025-2026 | **Associated with:** Al Hussein Technical University
+**Project link:** https://github.com/AhmadM962/my-projects/tree/main/Penetration%20Testing
 
-**Skills:** Risk Assessment, ISO 31000, GDPR, HIPAA, Security Policy Development, Disaster Recovery Planning
+Developed a complete buffer overflow exploit from scratch across 7 phases: fuzzing a target service to crash at ~2011 bytes, identifying EIP offset at 2003 bytes, confirming control with 0x42424242, finding a JMP ESP gadget in essfunc.dll via mona.py, and delivering a reverse shell using MSFvenom shellcode. Pivoted from the compromised server to a secondary target through network tunneling. Also completed PortSwigger race condition labs, a TryHackMe Active Directory room, and 9 CyberTalents CTF challenges (easy through hard).
 
----
+**Skills:** Penetration Testing, Exploit Development, Buffer Overflow, Python, Metasploit, Immunity Debugger, Kali Linux, Network Pivoting, CTF, Burp Suite
 
-### 4. Campus Management System (Java)
-**Date:** 2024 | **Associated with:** Al Hussein Technical University
-
-Built a campus management system in Java implementing custom data structures: LinkedList, Stack, Queue, Binary Search Tree, and Graph with Dijkstra's shortest path algorithm. Includes Big-O complexity analysis for all operations.
-
-**Skills:** Java, Data Structures, Algorithms, Dijkstra's Algorithm, Object-Oriented Programming
+> **Why this matters:** Demonstrates end-to-end offensive security capability -- the #1 skill employers look for in a cybersecurity engineer.
 
 ---
 
-### 5. Donor Tracking Database System
-**Date:** 2024 | **Associated with:** Al Hussein Technical University
+### 2. Privacy-Preserving Phishing URL Detection (Research Paper)
+**Date:** 2025-2026 | **Associated with:** Al Hussein Technical University
+**Project link:** https://github.com/AhmadM962/my-projects/tree/main/Computing%20Research%20Project
 
-Designed and implemented a MySQL database system for charity donor management. Covered the full database lifecycle: ER modeling, normalization (1NF-3NF), stored procedures, views, and role-based access control.
+Authored an academic research paper on a novel phishing detection system that runs entirely offline for user privacy. Trained an XGBoost classifier on the PhiUSIIL dataset using URL-only lexical features, achieving 99.93% accuracy with sub-0.1% miss and false-alarm rates at millisecond-range inference speed. Used SHAP for model explainability and conducted a user survey (n=33) showing 97% preference for inline browser warnings over pop-ups. Proposed a deployable browser extension concept combining lightweight ML with human-centered warning design.
 
-**Skills:** MySQL, SQL, Database Design, ER Modeling, Normalization, Stored Procedures
+**Skills:** Machine Learning, XGBoost, SHAP, Python, scikit-learn, Cybersecurity, Academic Research, Survey Design
 
----
-
-### 6. RSA Cryptography Implementation
-**Date:** 2024 | **Associated with:** Al Hussein Technical University
-
-Implemented RSA encryption from scratch including prime selection, key generation, and message encryption. Also built hash functions in MATLAB and geometric rendering in C.
-
-**Skills:** Cryptography, RSA, MATLAB, C Programming, Number Theory
+> **Why this matters:** Combines ML engineering with security research -- shows you can do more than run tools, you can innovate.
 
 ---
 
-### 7. Beyond-The-Technical 2024 Training Event
-**Date:** Spring 2024 | **Associated with:** Al Hussein Technical University
-
-Co-organized a 3-day professional training event for 500+ engineers. Managed JD 150,000 budget, coordinated keynote speakers, and resolved budget challenges using root cause analysis (Fishbone, 5-Why, PDCA).
-
-**Skills:** Event Planning, Budget Management, Project Management, Agile, Problem Solving, Leadership
-
----
-
-### 8. Tourism Booking Software System
-**Date:** Semester 1, 2024-2025 | **Associated with:** Al Hussein Technical University
-
-Developed a tourism booking system with complete SDLC documentation: feasibility study, SRS, SDS with Data Flow Diagrams, Requirements Traceability Matrix, and evaluation using real-world case studies (NASA, FAA).
-
-**Skills:** Software Development Lifecycle, Agile, Requirements Engineering, Data Flow Diagrams, Documentation
-
----
-
-### 9. AI Threat Detection System - Project Plan
-**Date:** Semester 1, 2024-2025 | **Associated with:** Al Hussein Technical University
-
-Created a project management plan for an AI-driven threat detection system for a real cybersecurity company in Jordan. Includes WBS, Gantt charts, budget planning, risk management, and Agile methodology.
-
-**Skills:** Project Management, Agile, Risk Management, Requirements Gathering, Stakeholder Analysis
-
----
-
-### 10. ISMS Design for Insurance Company
-**Date:** Semester 2, 2024-2025 | **Associated with:** Al Hussein Technical University
-
-Designed a comprehensive Information Security Management System for a multi-regional insurance company using COBIT 2019 and ISO 27001 frameworks. Included audit planning and governance framework mapping.
-
-**Skills:** COBIT 2019, ISO 27001, Information Security Management, Risk Assessment, Audit Planning
-
----
-
-### 11. Multi-Site Secure Network with VPN & Firewall
-**Date:** Semester 1, 2024-2025 | **Associated with:** Al Hussein Technical University
-
-Built a secure multi-site network with IPSec VPN tunnels, Cisco ASA firewall with DMZ, ACL-based access control, and device hardening (SSH, port security, DHCP snooping, AAA authentication).
-
-**Skills:** Network Security, IPSec VPN, Cisco ASA, Firewall Configuration, ACLs, Network Hardening
-
----
-
-### 12. Operating Systems Administration
-**Date:** Semester 3, 2024-2025 | **Associated with:** Al Hussein Technical University
-
-Completed practical OS administration tasks including Linux user/group/permission management, page replacement algorithms (LRU, FIFO), process scheduling (Round Robin, Priority), and Docker containerization analysis.
-
-**Skills:** Linux Administration, Windows Administration, Docker, Process Scheduling, Memory Management
-
----
-
-### 13. DPSR Penetration Test
-**Date:** Semester 2, 2024-2025 | **Associated with:** Al Hussein Technical University
-
-Executed a penetration test using DPSR methodology: OSINT reconnaissance with Shodan and theHarvester, Nmap scanning, Nessus vulnerability assessment, and web application analysis covering OWASP Top 10.
-
-**Skills:** Penetration Testing, Nmap, Nessus, Metasploit, OSINT, OWASP Top 10
-
----
-
-### 14. Lock & Key - Cryptographic Communication System
+### 3. Lock & Key - Cryptographic Communication System
 **Date:** Summer 2025 | **Associated with:** Al Hussein Technical University
+**Project link:** https://github.com/AhmadM962/my-projects/tree/main/Cryptography
 
-Built a secure communication tool from scratch in Python: DES encryption with CBC mode (34/34 test vectors passed), RSA digital signatures, sign-then-encrypt workflow, cryptanalysis demonstration, and ECB vs CBC image encryption comparison.
+Built a complete secure communication system from scratch in Python: full DES implementation (IP, FP, E, P permutations, 8 S-boxes, 16 subkeys, Feistel rounds) with CBC mode and Ciphertext Stealing -- passed all 34 professor test vectors (25 ECB + 9 CBC-CTS). Implemented RSA key generation, segmented digital signatures over SHA-256, and sign-then-encrypt workflow. Demonstrated RSA cryptanalysis on textbook RSA without padding and compared ECB vs CBC security on image encryption (ECB reveals patterns, CBC produces noise).
 
-**Skills:** Python, Cryptography, DES, RSA, SHA-256, Digital Signatures
+**Skills:** Python, Cryptography, DES, RSA, SHA-256, CBC Mode, Digital Signatures, Number Theory
 
----
-
-### 15. AI/ML Logistics Optimization Pipeline
-**Date:** Summer 2025 | **Associated with:** Al Hussein Technical University
-
-Built ML pipelines on a 180K-row dataset: KNN classifier (91.98% accuracy), neural network, and Azure ML deployment. Applied SHAP explainability and advised on AI healthcare integration with GDPR/HIPAA analysis.
-
-**Skills:** Python, Machine Learning, scikit-learn, Azure ML, Neural Networks, SHAP, Data Science
+> **Why this matters:** Building crypto from scratch proves deep understanding of how security works at the mathematical level -- rare and valued.
 
 ---
 
-### 16. VerifAI - AI Background Check Startup
-**Date:** Fall 2025 | **Associated with:** Al Hussein Technical University
+### 4. Digital Forensics - Data Leak Investigation
+**Date:** 2025-2026 | **Associated with:** Al Hussein Technical University
+**Project link:** https://github.com/AhmadM962/my-projects/tree/main/Forensics
 
-Co-developed a startup business plan for an AI-powered background verification tool for HR. Produced market analysis (TAM/SAM/SOM), 5-year financial projections, Business Model Canvas, and investor pitch deck.
+Investigated a suspected data leak at a UK legal firm by analyzing a deliberately corrupted VHD disk image. Repaired two byte-level corruptions (MBR Starting LBA and VBR MFTMirr cluster reference), discovered a steganographically hidden DOCX contract embedded after a PNG IEND marker, and built a forensic timeline linking the suspect to data exfiltration through Prefetch analysis (HxD hex editor usage), LNK shortcuts (file accessed from external Z: drive), and USN Journal records (batch copy at 12:29:01 UTC). Applied UK Computer Misuse Act 1990 and ISO/IEC 27037 standards.
 
-**Skills:** Entrepreneurship, Business Planning, Market Analysis, Financial Modeling, Design Thinking
+**Skills:** Digital Forensics, FTK Imager, HxD, Steganography Detection, NTFS Internals, MBR/VBR Analysis, Evidence Recovery, Incident Investigation
 
----
-
-### 17. Digital Forensics - Data Leak Investigation
-**Date:** Semester 2, 2025-2026 | **Associated with:** Al Hussein Technical University
-
-Investigated a data leak by repairing a corrupted VHD disk image, discovering steganographically hidden evidence, and building a forensic timeline using Prefetch, LNK, and USN Journal artifacts.
-
-**Skills:** Digital Forensics, FTK Imager, Steganography, NTFS Analysis, Evidence Recovery, Incident Investigation
+> **Why this matters:** DFIR (Digital Forensics & Incident Response) is one of the highest-demand cybersecurity specialties.
 
 ---
 
-### 18. SOES Cyber Risk Assessment
-**Date:** Semester 1, 2025-2026 | **Associated with:** Al Hussein Technical University
+### 5. ShipTrack - Secure Package Delivery Application
+**Date:** 2025-2026 | **Associated with:** Al Hussein Technical University
+**Project link:** https://github.com/AhmadM962/my-projects/tree/main/Secure%20Coding
 
-Performed a complete risk assessment of a cloud-based examination system for 6,000+ users. Applied STRIDE/DREAD threat modeling, FAIR quantitative analysis with Annualized Loss Exposure, and NIST CSF framework.
+Developed a security-first Java 17 console application for a package delivery company with four user roles (Admin, Dispatcher, Customer, Delivery). Implemented PBKDF2-HMAC-SHA-256 password hashing (16-byte salt, 65,536 iterations, 256-bit key), role-based access control, configurable password policies, and account lockout. Created a full STRIDE threat model using Microsoft Threat Modeling Tool with 10+ threats per category. Validated with a 106-test JUnit suite, Jazzer fuzz testing (10,000 iterations, zero failures), and PMD static analysis (61 violations found and remediated).
 
-**Skills:** Risk Analysis, STRIDE, DREAD, FAIR, NIST CSF, Threat Modeling, Quantitative Risk Assessment
+**Skills:** Java, Secure Coding, PBKDF2, STRIDE Threat Modeling, JUnit Testing, Fuzz Testing, PMD Static Analysis, RBAC
 
----
-
-### 19. ShipTrack - Secure Package Delivery App
-**Date:** Semester 2, 2025-2026 | **Associated with:** Al Hussein Technical University
-
-Developed a security-first Java 17 application with PBKDF2 authentication, RBAC, and configurable security policies. Validated with 106 JUnit tests, Jazzer fuzz testing (10K iterations, zero failures), and PMD static analysis.
-
-**Skills:** Java, Secure Coding, PBKDF2, JUnit Testing, Fuzz Testing, Static Analysis, STRIDE Threat Modeling
+> **Why this matters:** Secure development skills are critical -- this proves you can build software that's secure by design, not just find holes in others' code.
 
 ---
 
-### 20. AWS Cloud Infrastructure & Serverless App
-**Date:** Semester 2, 2025-2026 | **Associated with:** Al Hussein Technical University
+## Project Collections
 
-Designed and deployed two AWS solutions: cloud migration with multi-AZ VPC, Auto Scaling, and IAM security; plus a serverless medical booking system using Lambda, API Gateway, DynamoDB, and Amplify CI/CD.
+### 6. Network & Cloud Security Portfolio (5 projects)
+**Date:** 2024-2026 | **Associated with:** Al Hussein Technical University
+**Project link:** https://github.com/AhmadM962/my-projects
 
-**Skills:** AWS, Cloud Computing, Serverless Architecture, VPC, Lambda, DynamoDB, IAM, CI/CD
+A collection of 5 infrastructure security projects completed during my degree:
 
----
+**Multi-Site Secure Network (Network Security):** Designed a 5-office network with IPSec VPN tunnels, Cisco ASA firewall with DMZ, ACLs, device hardening (SSH, port security, DHCP snooping), and AAA authentication.
 
-### 21. Penetration Testing & Exploit Development
-**Date:** Semester 2, 2025-2026 | **Associated with:** Al Hussein Technical University
+**AWS Cloud Infrastructure (Cloud Computing):** Built two AWS solutions -- a cloud migration with multi-AZ VPC, Auto Scaling, IAM least-privilege, and S3 lifecycle policies; plus a serverless medical booking app using Lambda, API Gateway, DynamoDB, and Amplify CI/CD.
 
-Developed a full buffer overflow exploit (7 phases: fuzzing to reverse shell), performed network pivoting, completed PortSwigger and TryHackMe challenges, and solved 9 CTF challenges across difficulty levels.
+**Enterprise Network Design (Networking):** Deployed a 7-office network with VLSM subnetting, RIPv2, five services (DHCP, DNS, FTP, HTTP, Email), and security hardening.
 
-**Skills:** Penetration Testing, Exploit Development, Buffer Overflow, Python, Metasploit, CTF, Kali Linux
+**DPSR Penetration Test (Ethical Hacking):** OSINT reconnaissance (Shodan, theHarvester), Nmap scanning, Nessus vulnerability assessment, OWASP Top 10 web analysis.
 
----
+**OS Administration (Operating Systems):** Linux user/group/permission management, Docker, process scheduling algorithms, and system hardening.
 
-### 22. Phishing URL Detection - Academic Research Paper
-**Date:** Semester 1, 2025-2026 | **Associated with:** Al Hussein Technical University
-
-Authored a research paper on privacy-preserving phishing detection. Trained an XGBoost model achieving 99.93% accuracy, conducted a user survey (n=33) on warning design, and proposed a browser extension with SHAP-based explanations.
-
-**Skills:** Machine Learning, XGBoost, Research, Python, Cybersecurity, Academic Writing, SHAP
+**Skills:** AWS, Cisco Packet Tracer, IPSec VPN, Cisco ASA, VPC, Lambda, DynamoDB, Nmap, Nessus, Linux Administration, Docker, Network Design, Firewall Configuration
 
 ---
 
-### 23. Computer Architecture & Assembly Programming
-**Date:** Fall 2025-2026 | **Associated with:** Al Hussein Technical University
+### 7. Security Governance, Risk & Compliance Portfolio (5 projects)
+**Date:** 2024-2026 | **Associated with:** Al Hussein Technical University
+**Project link:** https://github.com/AhmadM962/my-projects
 
-Designed computer systems with Boolean simplification, instruction word formats, interrupt handling, assembly programming, pipeline analysis, and RISC vs CISC comparison.
+A collection of 5 GRC (Governance, Risk, Compliance) and supporting projects:
 
-**Skills:** Computer Architecture, Assembly Language, Digital Logic, Boolean Algebra, Pipelining
+**Cyber Risk Assessment - SOES (Risk Analysis):** Complete risk assessment of a 6,000-user examination system using STRIDE/DREAD threat modeling, FAIR quantitative analysis with Annualized Loss Exposure, and NIST CSF mapping.
 
----
+**ISMS Design (Information Security):** Designed an Information Security Management System for a multi-regional insurance company using COBIT 2019, ISO 27001, PDCA cycle, and audit planning.
 
-### 24. E-Commerce Business Intelligence Solution
-**Date:** Semester 2, 2024-2025 | **Associated with:** Al Hussein Technical University
+**Corporate Security Assessment (Security):** 17-observation risk register, GDPR/HIPAA compliance analysis, three security policies (email, wireless, disaster recovery) using ISO 31000.
 
-Designed a data science solution for e-commerce marketing using Power BI, Orange, and Excel. Analyzed multi-product sales data with visualizations and security threat assessment.
+**AI Threat Detection Planning (Project Management):** Complete project plan for an AI-driven threat detection system at a real cybersecurity firm, including WBS, Gantt charts, and $30K budget management.
 
-**Skills:** Power BI, Data Visualization, Business Intelligence, Data Analysis, Excel
+**AI/ML for Security (AI & Intelligent Systems):** Built ML pipelines (KNN: 91.98% accuracy) with Azure ML deployment and SHAP explainability, plus AI ethics analysis for healthcare with GDPR/HIPAA compliance.
 
----
-
-### 25. Emergency Response Analytics & Optimization
-**Date:** Semester 2, 2025-2026 | **Associated with:** Al Hussein Technical University
-
-Built analytics solutions for emergency response: descriptive pattern analysis, predictive response time models, and Genetic Algorithm optimization for ambulance dispatch strategy.
-
-**Skills:** Python, Data Analytics, Predictive Modeling, Genetic Algorithms, Data Visualization
+**Skills:** STRIDE, DREAD, FAIR, NIST CSF, ISO 27001, COBIT 2019, ISO 31000, GDPR, HIPAA, Risk Assessment, Threat Modeling, Security Policy, Project Management, Machine Learning
 
 ---
 
